@@ -1,5 +1,5 @@
 #include "./helper.h"
-#include "coda.h"
+#include "cmo.h"
 
 BOOST_AUTO_TEST_CASE(lib_simple_test)
 {

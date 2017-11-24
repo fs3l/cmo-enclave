@@ -1,5 +1,5 @@
-#ifndef CODA_H
-#define CODA_H
+#ifndef cmo_H
+#define cmo_H
 
 #include <stdint.h>
 
@@ -7,7 +7,7 @@ class ObIterator;
 class ObRwIterator;
 class NobArray;
 
-class Coda
+class CMO
 {
 public:
   ObIterator init_ob_iterator(int32_t *data, int32_t len);
