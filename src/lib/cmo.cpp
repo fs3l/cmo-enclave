@@ -75,7 +75,8 @@ void begin_tx(CMO_p rt)
     ob->shadow_mem_len = max_ob_shadow_mem_size(rt, ob);
     ob->shadow_mem = new int32_t[ob->shadow_mem_len];
     ob->iter_pos = 0;
-    memcpy(ob->shadow_mem, ob->data + ob->shadow_mem_pos, sizeof(int32_t) * ob->shadow_mem_len);
+    memcpy(ob->shadow_mem, ob->data + ob->shadow_mem_pos,
+           sizeof(int32_t) * ob->shadow_mem_len);
   }
 
   for (size_t i = 0; i < rt->w_obs.size(); ++i) {
@@ -83,7 +84,8 @@ void begin_tx(CMO_p rt)
     ob->shadow_mem_len = max_rw_ob_shadow_mem_size(rt, ob);
     ob->shadow_mem = new int32_t[ob->shadow_mem_len];
     ob->iter_pos = 0;
-    memcpy(ob->shadow_mem, ob->data + ob->shadow_mem_pos, sizeof(int32_t) * ob->shadow_mem_len);
+    memcpy(ob->shadow_mem, ob->data + ob->shadow_mem_pos,
+           sizeof(int32_t) * ob->shadow_mem_len);
   }
 
   for (size_t i = 0; i < rt->nobs.size(); ++i) {
@@ -97,7 +99,8 @@ void end_tx(CMO_p rt)
 {
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
-    memcpy(ob->data + ob->shadow_mem_pos, ob->shadow_mem, sizeof(int32_t) * ob->shadow_mem_len);
+    memcpy(ob->data + ob->shadow_mem_pos, ob->shadow_mem,
+           sizeof(int32_t) * ob->shadow_mem_len);
     ob->shadow_mem_pos += ob->iter_pos;
     delete[] ob->shadow_mem;
     ob->shadow_mem = NULL;
@@ -106,7 +109,8 @@ void end_tx(CMO_p rt)
 
   for (size_t i = 0; i < rt->w_obs.size(); ++i) {
     WriteObIterator_p ob = rt->w_obs[i];
-    memcpy(ob->data + ob->shadow_mem_pos, ob->shadow_mem, sizeof(int32_t) * ob->shadow_mem_len);
+    memcpy(ob->data + ob->shadow_mem_pos, ob->shadow_mem,
+           sizeof(int32_t) * ob->shadow_mem_len);
     ob->shadow_mem_pos += ob->iter_pos;
     delete[] ob->shadow_mem;
     ob->shadow_mem = NULL;
@@ -123,26 +127,27 @@ void end_tx(CMO_p rt)
 
 void free_read_ob(ReadObIterator_p ob)
 {
-  if (ob->shadow_mem != NULL) delete ob->shadow_mem;
+  if (ob->shadow_mem != NULL) delete[] ob->shadow_mem;
   delete ob;
 }
 
 void free_write_ob(WriteObIterator_p ob)
 {
-  if (ob->shadow_mem != NULL) delete ob->shadow_mem;
+  if (ob->shadow_mem != NULL) delete[] ob->shadow_mem;
   delete ob;
 }
 
 void free_nob(NobArray_p nob)
 {
-  if (nob->shadow_mem != NULL) delete nob->shadow_mem;
+  if (nob->shadow_mem != NULL) delete[] nob->shadow_mem;
   delete nob;
 }
 
 int32_t ob_read_next(ReadObIterator_p ob)
 {
   int32_t data = ob->shadow_mem[ob->iter_pos++];
-  if (ob->iter_pos == ob->shadow_mem_len && ob->shadow_mem_pos + ob->shadow_mem_len < ob->len) {
+  if (ob->iter_pos == ob->shadow_mem_len &&
+      ob->shadow_mem_pos + ob->shadow_mem_len < ob->len) {
     end_tx(ob->rt);
     begin_tx(ob->rt);
   }
@@ -152,14 +157,18 @@ int32_t ob_read_next(ReadObIterator_p ob)
 int32_t ob_write_next(WriteObIterator_p ob)
 {
   int32_t data = ob->shadow_mem[ob->iter_pos++];
-  if (ob->iter_pos == ob->shadow_mem_len && ob->shadow_mem_pos + ob->shadow_mem_len < ob->len) {
+  if (ob->iter_pos == ob->shadow_mem_len &&
+      ob->shadow_mem_pos + ob->shadow_mem_len < ob->len) {
     end_tx(ob->rt);
     begin_tx(ob->rt);
   }
   return data;
 }
 
-int32_t nob_read_at(NobArray_p nob, int32_t addr) { return nob->shadow_mem[addr]; }
+int32_t nob_read_at(NobArray_p nob, int32_t addr)
+{
+  return nob->shadow_mem[addr];
+}
 void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
 {
   nob->shadow_mem[addr] = data;
