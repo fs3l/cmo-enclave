@@ -22,7 +22,7 @@ void free_cmo_runtime(CMO_p rt)
   delete rt;
 }
 
-ReadObIterator_p init_ob_iterator(CMO_p rt, int32_t *data, int32_t len)
+ReadObIterator_p init_read_ob_iterator(CMO_p rt, int32_t *data, int32_t len)
 {
   ReadObIterator_p ob = new ReadObIterator_t;
   ob->rt = rt;
@@ -30,10 +30,11 @@ ReadObIterator_p init_ob_iterator(CMO_p rt, int32_t *data, int32_t len)
   ob->len = len;
   ob->buf = NULL;
   ob->buf_len = ob->buf_pos = ob->iter_pos = 0;
+  rt->r_obs.push_back(ob);
   return ob;
 }
 
-WriteObIterator_p init_ob_rw_iterator(CMO_p rt, int32_t *data, int32_t len)
+WriteObIterator_p init_write_ob_iterator(CMO_p rt, int32_t *data, int32_t len)
 {
   WriteObIterator_p ob = new WriteObIterator_t;
   ob->rt = rt;
@@ -41,6 +42,7 @@ WriteObIterator_p init_ob_rw_iterator(CMO_p rt, int32_t *data, int32_t len)
   ob->len = len;
   ob->buf = NULL;
   ob->buf_len = ob->buf_pos = ob->iter_pos = 0;
+  rt->w_obs.push_back(ob);
   return ob;
 }
 
@@ -51,6 +53,7 @@ NobArray_p init_nob_array(CMO_p rt, int32_t *data, int32_t len)
   nob->data = data;
   nob->len = len;
   nob->buf = NULL;
+  rt->nobs.push_back(nob);
   return nob;
 }
 

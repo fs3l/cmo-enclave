@@ -19,8 +19,8 @@ typedef struct CMO *CMO_p;
 CMO_p init_cmo_runtime();
 void free_cmo_runtime(CMO_p rt);
 
-struct ReadObIterator* init_ob_iterator(CMO_p rt, int32_t *data, int32_t len);
-struct WriteObIterator* init_ob_rw_iterator(CMO_p rt, int32_t *data, int32_t len);
+struct ReadObIterator* init_read_ob_iterator(CMO_p rt, int32_t *data, int32_t len);
+struct WriteObIterator* init_write_ob_iterator(CMO_p rt, int32_t *data, int32_t len);
 struct NobArray* init_nob_array(CMO_p rt, int32_t *data, int32_t len);
 void begin_leaky_sec(CMO_p rt);
 void end_leaky_sec(CMO_p rt);
