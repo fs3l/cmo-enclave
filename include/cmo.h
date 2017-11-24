@@ -15,10 +15,6 @@ struct CMO
   void begin_leaky_sec();
   void end_leaky_sec();
 
-  friend class ObIterator;
-  friend class ObRwIterator;
-  friend class NobArray;
-
   void begin_tx();
   void end_tx();
 };
