@@ -18,7 +18,13 @@ set(CMAKE_CXX_STANDARD 11)
 
 # build src
 include_directories("${PROJECT_SOURCE_DIR}/include")
-add_subdirectory(src)
+
+glob_cpp_source_file(cmo_src PATH src/lib)
+add_library(cmo ${cmo_src})
+list(APPEND linked_libraries cmo)
+
+glob_cpp_source_file(algo_src PATH src/algo)
+add_library(algo ${algo_src})
 
 # add unit test
 enable_testing()

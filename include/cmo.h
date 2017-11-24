@@ -2,38 +2,63 @@
 #define CMO_H
 
 #include <stdint.h>
+#include <vector>
 
-class ObIterator;
-class ObRwIterator;
-class NobArray;
+struct ReadObIterator;
+struct WriteObIterator;
+struct NobArray;
 
-struct CMO
-{
-  ObIterator init_ob_iterator(int32_t *data, int32_t len);
-  ObRwIterator init_ob_rw_iterator(int32_t *data, int32_t len);
-  NobArray init_nob_array(int32_t *data, int32_t len);
-  void begin_leaky_sec();
-  void end_leaky_sec();
-
-  void begin_tx();
-  void end_tx();
+struct CMO {
+  std::vector<struct ReadObIterator *> r_obs;
+  std::vector<struct WriteObIterator *> w_obs;
+  std::vector<struct NobArray *> nobs;
 };
+typedef struct CMO CMO_t;
+typedef struct CMO *CMO_p;
 
-struct ObIterator
-{
-  int32_t read_next();
-};
+CMO_p init_cmo_runtime();
+void free_cmo_runtime(CMO_p rt);
 
-struct ObRwIterator
-{
-  int32_t read_next();
-  void write_next(int32_t data);
-};
+struct ReadObIterator* init_ob_iterator(CMO_p rt, int32_t *data, int32_t len);
+struct WriteObIterator* init_ob_rw_iterator(CMO_p rt, int32_t *data, int32_t len);
+struct NobArray* init_nob_array(CMO_p rt, int32_t *data, int32_t len);
+void begin_leaky_sec(CMO_p rt);
+void end_leaky_sec(CMO_p rt);
 
-struct NobArray
-{
-  int32_t read_at(int32_t addr);
-  void write_at(int32_t addr, int32_t data);
+struct ReadObIterator {
+  CMO_p rt;
+  int32_t* data;
+  int32_t len;
+  int32_t* buf;
+  int32_t buf_len, buf_pos, iter_pos;
 };
+typedef struct ReadObIterator ReadObIterator_t;
+typedef struct ReadObIterator* ReadObIterator_p;
+
+int32_t ob_read_next(ReadObIterator_p ob);
+
+struct WriteObIterator {
+  CMO_p rt;
+  int32_t* data;
+  int32_t len;
+  int32_t* buf;
+  int32_t buf_len, buf_pos, iter_pos;
+};
+typedef struct WriteObIterator WriteObIterator_t;
+typedef struct WriteObIterator* WriteObIterator_p;
+
+void ob_write_next(WriteObIterator_p ob, int32_t data);
+
+struct NobArray {
+  CMO_p rt;
+  int32_t* data;
+  int32_t len;
+  int32_t* buf;
+};
+typedef struct NobArray NobArray_t;
+typedef struct NobArray* NobArray_p;
+
+int32_t nob_read_at(NobArray_p nob, int32_t addr);
+void nob_write_at(NobArray_p nob, int32_t addr, int32_t data);
 
 #endif
