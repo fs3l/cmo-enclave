@@ -29,8 +29,8 @@ struct ReadObIterator {
   CMO_p rt;
   int32_t* data;
   int32_t len;
-  int32_t* buf;
-  int32_t buf_len, buf_pos, iter_pos;
+  int32_t* shadow_mem;
+  int32_t shadow_mem_len, shadow_mem_pos, iter_pos;
 };
 typedef struct ReadObIterator ReadObIterator_t;
 typedef struct ReadObIterator* ReadObIterator_p;
@@ -41,8 +41,8 @@ struct WriteObIterator {
   CMO_p rt;
   int32_t* data;
   int32_t len;
-  int32_t* buf;
-  int32_t buf_len, buf_pos, iter_pos;
+  int32_t* shadow_mem;
+  int32_t shadow_mem_len, shadow_mem_pos, iter_pos;
 };
 typedef struct WriteObIterator WriteObIterator_t;
 typedef struct WriteObIterator* WriteObIterator_p;
@@ -53,7 +53,7 @@ struct NobArray {
   CMO_p rt;
   int32_t* data;
   int32_t len;
-  int32_t* buf;
+  int32_t* shadow_mem;
 };
 typedef struct NobArray NobArray_t;
 typedef struct NobArray* NobArray_p;
