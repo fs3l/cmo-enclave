@@ -9,19 +9,21 @@ struct WriteObIterator;
 struct NobArray;
 
 struct CMO {
-  std::vector<struct ReadObIterator *> r_obs;
-  std::vector<struct WriteObIterator *> w_obs;
-  std::vector<struct NobArray *> nobs;
+  std::vector<struct ReadObIterator*> r_obs;
+  std::vector<struct WriteObIterator*> w_obs;
+  std::vector<struct NobArray*> nobs;
 };
 typedef struct CMO CMO_t;
-typedef struct CMO *CMO_p;
+typedef struct CMO* CMO_p;
 
 CMO_p init_cmo_runtime();
 void free_cmo_runtime(CMO_p rt);
 
-struct ReadObIterator* init_read_ob_iterator(CMO_p rt, int32_t *data, int32_t len);
-struct WriteObIterator* init_write_ob_iterator(CMO_p rt, int32_t *data, int32_t len);
-struct NobArray* init_nob_array(CMO_p rt, int32_t *data, int32_t len);
+struct ReadObIterator* init_read_ob_iterator(CMO_p rt, int32_t* data,
+                                             int32_t len);
+struct WriteObIterator* init_write_ob_iterator(CMO_p rt, int32_t* data,
+                                               int32_t len);
+struct NobArray* init_nob_array(CMO_p rt, int32_t* data, int32_t len);
 void begin_leaky_sec(CMO_p rt);
 void end_leaky_sec(CMO_p rt);
 
