@@ -1,5 +1,5 @@
-#ifndef cmo_H
-#define cmo_H
+#ifndef CMO_H
+#define CMO_H
 
 #include <stdint.h>
 
