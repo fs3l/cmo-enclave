@@ -174,7 +174,7 @@ int32_t ob_write_next(WriteObIterator_p ob)
   return data;
 }
 
-int32_t nob_read_at(NobArray_p nob, int32_t addr)
+int32_t nob_read_at(const NobArray_p nob, int32_t addr)
 {
   return nob->shadow_mem[addr];
 }
