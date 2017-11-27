@@ -19,7 +19,7 @@ typedef struct CMO* CMO_p;
 CMO_p init_cmo_runtime();
 void free_cmo_runtime(CMO_p rt);
 
-struct ReadObIterator* init_read_ob_iterator(CMO_p rt, int32_t* data,
+struct ReadObIterator* init_read_ob_iterator(CMO_p rt, const int32_t* data,
                                              int32_t len);
 struct WriteObIterator* init_write_ob_iterator(CMO_p rt, int32_t* data,
                                                int32_t len);
@@ -29,7 +29,7 @@ void end_leaky_sec(CMO_p rt);
 
 struct ReadObIterator {
   CMO_p rt;
-  int32_t* data;
+  const int32_t* data;
   int32_t len;
   int32_t* shadow_mem;
   int32_t shadow_mem_len, shadow_mem_pos, iter_pos;

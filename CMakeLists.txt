@@ -25,6 +25,8 @@ list(APPEND linked_libraries cmo)
 
 glob_cpp_source_file(algo_src PATH src/algo)
 add_library(algo ${algo_src})
+target_link_libraries(algo cmo)
+list(APPEND linked_libraries algo)
 
 # add unit test
 enable_testing()

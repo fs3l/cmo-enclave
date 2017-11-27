@@ -22,7 +22,7 @@ void free_cmo_runtime(CMO_p rt)
   delete rt;
 }
 
-ReadObIterator_p init_read_ob_iterator(CMO_p rt, int32_t *data, int32_t len)
+ReadObIterator_p init_read_ob_iterator(CMO_p rt, const int32_t *data, int32_t len)
 {
   ReadObIterator_p ob = new ReadObIterator_t;
   ob->rt = rt;
@@ -99,8 +99,6 @@ void end_tx(CMO_p rt)
 {
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
-    memcpy(ob->data + ob->shadow_mem_pos, ob->shadow_mem,
-           sizeof(int32_t) * ob->shadow_mem_len);
     ob->shadow_mem_pos += ob->iter_pos;
     delete[] ob->shadow_mem;
     ob->shadow_mem = NULL;
