@@ -59,6 +59,7 @@ def FlagsForFile(filename, **kwargs):
             "-x",
             "c++",
             "-Iinclude/",
+            "-I/opt/intel/sgxsdk/include/"
             ]
     flags += SystemIncludePathasFlags()
     flags = MakeRelativePathsInFlagsAbsolute(flags, DirectoryOfThisScript())
