@@ -16,9 +16,10 @@ inline T max(const T& a, const T& b)
   return a > b ? a : b;
 }
 
-inline void swap(int32_t* a, int32_t* b)
+template <class T>
+inline void swap(T* a, T* b)
 {
-  int32_t tmp = *a;
+  T tmp = *a;
   *b = *a;
   *a = tmp;
 }
