@@ -23,7 +23,7 @@ void free_cmo_runtime(CMO_p rt)
   delete rt;
 }
 
-void cmo_abort(CMO_p rt, char *abort_msg)
+void cmo_abort(CMO_p rt, const char *abort_msg)
 {
   // TODO: check if it is in leaky sec
   end_leaky_sec(rt);
