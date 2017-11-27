@@ -4,7 +4,7 @@
 
 BOOST_AUTO_TEST_CASE(naive_shuffle_test)
 {
-  int32_t len = 1000;
+  int32_t len = 100;
   vector<int32_t> in(gen_random_sequence(len));
   vector<int32_t> out(len);
   naive_shuffle(in.data(), in.data(), out.data(), len);
