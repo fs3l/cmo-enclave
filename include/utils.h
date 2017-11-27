@@ -20,8 +20,8 @@ template <class T>
 inline void swap(T* a, T* b)
 {
   T tmp = *a;
-  *b = *a;
-  *a = tmp;
+  *a = *b;
+  *b = tmp;
 }
 
 int32_t random_int32();

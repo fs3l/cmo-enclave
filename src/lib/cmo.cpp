@@ -163,15 +163,14 @@ int32_t ob_read_next(ReadObIterator_p ob)
   return data;
 }
 
-int32_t ob_write_next(WriteObIterator_p ob)
+void ob_write_next(WriteObIterator_p ob, int32_t data)
 {
-  int32_t data = ob->shadow_mem[ob->iter_pos++];
+  ob->shadow_mem[ob->iter_pos++] = data;
   if (ob->iter_pos == ob->shadow_mem_len &&
       ob->shadow_mem_pos + ob->shadow_mem_len < ob->len) {
     end_tx(ob->rt);
     begin_tx(ob->rt);
   }
-  return data;
 }
 
 int32_t nob_read_at(const NobArray_p nob, int32_t addr)

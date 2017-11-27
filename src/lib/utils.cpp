@@ -1,6 +1,7 @@
 #include "utils.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #ifdef SGXAPI
 #include <sgx_trts.h>
