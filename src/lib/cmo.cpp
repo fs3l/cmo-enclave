@@ -1,6 +1,7 @@
 #include "cmo.h"
 #include "utils.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -22,7 +23,17 @@ void free_cmo_runtime(CMO_p rt)
   delete rt;
 }
 
-ReadObIterator_p init_read_ob_iterator(CMO_p rt, const int32_t *data, int32_t len)
+void cmo_abort(CMO_p rt, char *abort_msg)
+{
+  // TODO: check if it is in leaky sec
+  end_leaky_sec(rt);
+  // TODO: replace printf and abort with ecalls
+  printf("%s\n", abort_msg);
+  abort();
+}
+
+ReadObIterator_p init_read_ob_iterator(CMO_p rt, const int32_t *data,
+                                       int32_t len)
 {
   ReadObIterator_p ob = new ReadObIterator_t;
   ob->rt = rt;

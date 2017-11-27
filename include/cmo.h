@@ -18,6 +18,7 @@ typedef struct CMO* CMO_p;
 
 CMO_p init_cmo_runtime();
 void free_cmo_runtime(CMO_p rt);
+void cmo_abort(CMO_p rt, char* abort_msg);
 
 struct ReadObIterator* init_read_ob_iterator(CMO_p rt, const int32_t* data,
                                              int32_t len);
