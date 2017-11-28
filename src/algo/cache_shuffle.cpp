@@ -7,9 +7,11 @@
 
 // S: number of elements to be read in one pass.
 // num_of_bucket: number of buckets to be returned.
+// mem_cap: max number of element can be stored in the nob.
 static shuffle_bucket_p* _cache_shuffle_spray(const shuffle_bucket_p input,
                                               const int32_t S,
-                                              const int32_t num_of_bucket)
+                                              const int32_t num_of_bucket,
+                                              const int32_t mem_cap)
 {
   const int32_t len = input->len;
   const int32_t begin_idx = input->begin_idx;
@@ -30,7 +32,7 @@ static shuffle_bucket_p* _cache_shuffle_spray(const shuffle_bucket_p input,
   ReadObIterator_p read_ob = shuffle_bucket_init_read_ob(input, rt);
   WriteObIterator_p write_ob =
       init_write_ob_iterator(rt, write_output, write_output_len);
-  MultiQueue<shuffle_element_t> q(rt, max(S, num_of_bucket), num_of_bucket);
+  MultiQueue<shuffle_element_t> q(rt, mem_cap, num_of_bucket);
 
   int32_t i, read_idx, write_idx, bucket_idx, write_output_idx;
   shuffle_element_t e;
@@ -108,7 +110,7 @@ static shuffle_bucket_p* _cache_shuffle_spray(const shuffle_bucket_p input,
 }
 
 void cache_shuffle(const int32_t* arr_in, const int32_t* perm_in,
-                   int32_t* arr_out, int32_t len, double epsilon)
+                   int32_t* arr_out, int32_t len, double epsilon, int mem_cap)
 {
   if (len == 1) {
     arr_out[0] = arr_in[0];
@@ -121,7 +123,7 @@ void cache_shuffle(const int32_t* arr_in, const int32_t* perm_in,
 
   // spray
   int32_t temp_len = find_suitable_partitions(len, Q);
-  shuffle_bucket_p* temp = _cache_shuffle_spray(input, S, temp_len);
+  shuffle_bucket_p* temp = _cache_shuffle_spray(input, S, temp_len, mem_cap);
 
   // rspary
   bool done;
@@ -131,7 +133,7 @@ void cache_shuffle(const int32_t* arr_in, const int32_t* perm_in,
     new_temp_len = 0;
     for (int32_t i = 0; i < temp_len; ++i) {
       int32_t idx_len = temp[i]->end_idx - temp[i]->begin_idx;
-      if (idx_len <= S) {
+      if (idx_len <= mem_cap) {
         new_temp_len += 1;
       } else {
         done = false;
@@ -145,12 +147,12 @@ void cache_shuffle(const int32_t* arr_in, const int32_t* perm_in,
 
     for (int32_t i = 0, j = 0; i < temp_len; ++i) {
       int32_t idx_len = temp[i]->end_idx - temp[i]->begin_idx;
-      if (idx_len <= S) {
+      if (idx_len <= mem_cap) {
         new_temp[j++] = temp[i];
       } else {
         randomize_shuffle_bucket(temp[i]);
         int32_t q = find_suitable_partitions(idx_len, S);
-        shuffle_bucket_p* temp2 = _cache_shuffle_spray(temp[i], q, q);
+        shuffle_bucket_p* temp2 = _cache_shuffle_spray(temp[i], q, q, mem_cap);
         free_shuffle_bucket(temp[i]);
         for (int32_t k = 0; k < q; ++k) new_temp[j++] = temp2[k];
         delete[] temp2;
