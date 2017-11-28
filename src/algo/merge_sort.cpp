@@ -1,8 +1,7 @@
 #include "algo.h"
 #include "cmo.h"
 #include "cmo_queue.h"
-
-#include <math.h>
+#include "utils.h"
 
 void merge_sort(const int32_t* arr_in, int32_t* arr_out, int32_t len,
                 int32_t blow_up_factor)
