@@ -57,6 +57,32 @@ void print_shuffle_bucket(const shuffle_bucket_p bucket, bool skip_invalid_perm)
   }
 }
 
+shuffle_bucket_p* init_empty_shuffle_buckets(int32_t num_of_bucket,
+                                             int32_t bucket_len,
+                                             int32_t begin_idx, int end_idx,
+                                             int bucket_idx_len)
+{
+  shuffle_bucket_p* buckets = new shuffle_bucket_p[num_of_bucket];
+  int32_t bucket_begin_idx = begin_idx;
+  int32_t bucket_end_idx;
+  for (int32_t i = 0; i < num_of_bucket; ++i) {
+    if (i == num_of_bucket - 1)
+      bucket_end_idx = end_idx;
+    else
+      bucket_end_idx = bucket_begin_idx + bucket_idx_len;
+    buckets[i] =
+        init_empty_shuffle_bucket(bucket_len, bucket_begin_idx, bucket_end_idx);
+    bucket_begin_idx = bucket_end_idx;
+  }
+  return buckets;
+}
+
+void free_shuffle_buckets(shuffle_bucket_p* buckets, int num_of_bucket)
+{
+  for (int32_t i = 0; i < num_of_bucket; ++i) free_shuffle_bucket(buckets[i]);
+  delete[] buckets;
+}
+
 int32_t find_suitable_paritions(int32_t len, int32_t partition)
 {
   return min(partition,

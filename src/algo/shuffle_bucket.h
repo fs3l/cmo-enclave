@@ -25,7 +25,14 @@ shuffle_bucket_p init_shuffle_bucket(const int32_t* arr, const int32_t* perm,
                                      int32_t end_idx);
 void free_shuffle_bucket(shuffle_bucket_p bucket);
 void randomize_shuffle_bucket(shuffle_bucket_p bucket);
-void print_shuffle_bucket(const shuffle_bucket_p bucket, bool skip_invalid_perm = false);
+void print_shuffle_bucket(const shuffle_bucket_p bucket,
+                          bool skip_invalid_perm = false);
+
+shuffle_bucket_p* init_empty_shuffle_buckets(int32_t num_of_bucket,
+                                             int32_t bucket_len,
+                                             int32_t begin_idx, int end_idx,
+                                             int bucket_idx_len);
+void free_shuffle_buckets(shuffle_bucket_p* buckets, int num_of_bucket);
 
 // find a partition number p such that the len can be divided
 // to p partitions with each partition has the size len / p.
