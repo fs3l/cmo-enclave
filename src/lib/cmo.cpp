@@ -70,11 +70,11 @@ NobArray_p init_nob_array(CMO_p rt, int32_t *data, int32_t len)
 
 void begin_leaky_sec(CMO_p rt) { begin_tx(rt); }
 void end_leaky_sec(CMO_p rt) { end_tx(rt); }
-int32_t max_ob_shadow_mem_size(CMO_p _rt, ReadObIterator_p ob)
+int32_t max_read_ob_shadow_mem_size(CMO_p _rt, ReadObIterator_p ob)
 {
   return min(ob->len, ob->len - ob->shadow_mem_pos);
 }
-int32_t max_rw_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
+int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 {
   return min(2, ob->len - ob->shadow_mem_pos);
 }
@@ -83,7 +83,7 @@ void begin_tx(CMO_p rt)
 {
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
-    ob->shadow_mem_len = max_ob_shadow_mem_size(rt, ob);
+    ob->shadow_mem_len = max_read_ob_shadow_mem_size(rt, ob);
     ob->shadow_mem = new int32_t[ob->shadow_mem_len];
     ob->iter_pos = 0;
     memcpy(ob->shadow_mem, ob->data + ob->shadow_mem_pos,
@@ -92,7 +92,7 @@ void begin_tx(CMO_p rt)
 
   for (size_t i = 0; i < rt->w_obs.size(); ++i) {
     WriteObIterator_p ob = rt->w_obs[i];
-    ob->shadow_mem_len = max_rw_ob_shadow_mem_size(rt, ob);
+    ob->shadow_mem_len = max_write_ob_shadow_mem_size(rt, ob);
     ob->shadow_mem = new int32_t[ob->shadow_mem_len];
     ob->iter_pos = 0;
     memcpy(ob->shadow_mem, ob->data + ob->shadow_mem_pos,
