@@ -3,8 +3,8 @@
 #include "cmo_queue.h"
 #include "utils.h"
 
-void merge_sort(const int32_t* arr_in, int32_t* arr_out, int32_t len,
-                int32_t blow_up_factor)
+static void _merge_sort(const int32_t* arr_in, int32_t* arr_out, int32_t len,
+                        int32_t blow_up_factor)
 {
   if (len == 1) {
     arr_out[0] = arr_in[0];
@@ -15,8 +15,8 @@ void merge_sort(const int32_t* arr_in, int32_t* arr_out, int32_t len,
   int32_t rhs_len = len - lhs_len;
   int32_t* lhs_out = new int32_t[lhs_len];
   int32_t* rhs_out = new int32_t[rhs_len];
-  merge_sort(arr_in, lhs_out, lhs_len, blow_up_factor);
-  merge_sort(arr_in + lhs_len, rhs_out, rhs_len, blow_up_factor);
+  _merge_sort(arr_in, lhs_out, lhs_len, blow_up_factor);
+  _merge_sort(arr_in + lhs_len, rhs_out, rhs_len, blow_up_factor);
 
   int32_t s = blow_up_factor * (int)sqrt((double)len);
   int32_t half_s = s / 2;
@@ -101,4 +101,14 @@ done:
   free_cmo_runtime(rt);
   delete[] lhs_out;
   delete[] rhs_out;
+}
+
+void merge_sort(const int32_t* arr_in, int32_t* arr_out, int32_t len,
+                int32_t blow_up_factor)
+{
+  int32_t* random_arr_in = new int32_t[len];
+  for (int32_t i = 0; i < len; ++i) random_arr_in[i] = arr_in[i];
+  fisher_yates_shuffle(random_arr_in, len);
+  _merge_sort(random_arr_in, arr_out, len, blow_up_factor);
+  delete[] random_arr_in;
 }

@@ -5,8 +5,10 @@
 BOOST_AUTO_TEST_CASE(merge_sort_test)
 {
   int32_t len = 100;
-  vector<int32_t> in(gen_random_sequence(len));
-  vector<int32_t> out(len);
-  merge_sort(in.data(), out.data(), len);
-  for (int32_t i = 0; i < len; ++i) BOOST_CHECK(out[i] == i);
+  int32_t* input = gen_random_sequence(len);
+  int32_t* output = new int32_t[len];
+  merge_sort(input, output, len);
+  for (int32_t i = 0; i < len; ++i) BOOST_CHECK(output[i] == i);
+  delete[] input;
+  delete[] output;
 }

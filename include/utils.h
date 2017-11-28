@@ -26,6 +26,17 @@ inline void swap(T* a, T* b)
 
 int32_t random_int32();
 
-void fisher_yates_shuffle(int32_t* arr, int32_t len);
+template <class T>
+void fisher_yates_shuffle(T* arr, int32_t len)
+{
+  for (int32_t i = 0; i < len - 1; ++i) {
+    int32_t j = random_int32() % len;
+    swap(&arr[i], &arr[j]);
+  }
+}
+
+int32_t* gen_sequence(int32_t len, int32_t start_value = 0);
+
+int32_t* gen_random_sequence(int32_t len, int32_t start_value = 0);
 
 #endif
