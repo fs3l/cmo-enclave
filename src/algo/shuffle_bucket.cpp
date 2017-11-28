@@ -95,7 +95,7 @@ WriteObIterator_p shuffle_bucket_init_write_ob(shuffle_bucket_p bucket,
   return init_write_ob_iterator(rt, bucket->data, bucket->len * 2);
 }
 
-int32_t find_suitable_paritions(int32_t len, int32_t partition)
+int32_t find_suitable_partitions(int32_t len, int32_t partition)
 {
   return min(partition,
              (int32_t)ceil((double)len / ceil((double)len / partition)));

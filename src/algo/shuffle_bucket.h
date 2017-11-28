@@ -43,6 +43,6 @@ WriteObIterator_p shuffle_bucket_init_write_ob(shuffle_bucket_p bucket,
 
 // find a partition number p such that the len can be divided
 // to p partitions with each partition has the size len / p.
-int32_t find_suitable_paritions(int32_t len, int32_t parition);
+int32_t find_suitable_partitions(int32_t len, int32_t partition);
 
 #endif

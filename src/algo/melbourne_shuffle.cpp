@@ -108,7 +108,7 @@ static void _melbourne_shuffle(const int32_t* arr_in, const int32_t* perm_in,
                                int32_t* arr_out, int32_t len,
                                int32_t blow_up_factor)
 {
-  const int32_t num_of_bucket = find_suitable_paritions(len, ceil(sqrt(len)));
+  const int32_t num_of_bucket = find_suitable_partitions(len, ceil(sqrt(len)));
   const int32_t log_len = ceil(log2((double)len));
   const int32_t p_log_len = blow_up_factor * log_len;
   const int32_t bucket_idx_len = len / num_of_bucket;
