@@ -83,8 +83,7 @@ static void _melbourne_shuffle_cleanup(int32_t* arr_out,
 
     CMO_p rt = init_cmo_runtime();
 
-    ReadObIterator_p bucket_ob =
-        init_read_ob_iterator(rt, bucket->data, bucket_len * 2);
+    ReadObIterator_p bucket_ob = shuffle_bucket_init_read_ob(bucket, rt);
     NobArray_p nob =
         init_nob_array(rt, arr_out + begin_idx, end_idx - begin_idx);
 

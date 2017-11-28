@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "cmo.h"
+
 struct shuffle_element {
   int32_t value;
   int32_t perm;
@@ -33,6 +35,11 @@ shuffle_bucket_p* init_empty_shuffle_buckets(int32_t num_of_bucket,
                                              int32_t begin_idx, int end_idx,
                                              int bucket_idx_len);
 void free_shuffle_buckets(shuffle_bucket_p* buckets, int num_of_bucket);
+
+ReadObIterator_p shuffle_bucket_init_read_ob(const shuffle_bucket_p bucket,
+                                             CMO_p rt);
+WriteObIterator_p shuffle_bucket_init_write_ob(shuffle_bucket_p bucket,
+                                               CMO_p rt);
 
 // find a partition number p such that the len can be divided
 // to p partitions with each partition has the size len / p.

@@ -184,6 +184,7 @@ public:
     nob = init_nob_array(rt, data, data_len);
   }
   ~MultiQueue() { delete[] data; }
+  void reset_nob(CMO_p rt) { nob = init_nob_array(rt, data, data[0]); }
   // return the size of the queue queue_id
   int32_t size(int32_t queue_id) const
   {
