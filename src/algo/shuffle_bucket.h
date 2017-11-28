@@ -1,0 +1,34 @@
+#ifndef SHUFFLE_BUCKET_H
+#define SHUFFLE_BUCKET_H
+
+#include <stdint.h>
+
+struct shuffle_element {
+  int32_t value;
+  int32_t perm;
+};
+typedef struct shuffle_element shuffle_element_t;
+
+struct shuffle_bucket {
+  int32_t len;
+  int32_t begin_idx;
+  int32_t end_idx;
+  int32_t* data;  // layout: [value, perm], ....
+};
+typedef struct shuffle_bucket shuffle_bucket_t;
+typedef struct shuffle_bucket* shuffle_bucket_p;
+
+shuffle_bucket_p init_empty_shuffle_bucket(int32_t len, int32_t begin_idx,
+                                           int32_t end_idx);
+shuffle_bucket_p init_shuffle_bucket(const int32_t* arr, const int32_t* perm,
+                                     int32_t len, int32_t begin_idx,
+                                     int32_t end_idx);
+void free_shuffle_bucket(shuffle_bucket_p bucket);
+void randomize_shuffle_bucket(shuffle_bucket_p bucket);
+void print_shuffle_bucket(const shuffle_bucket_p bucket, bool skip_invalid_perm = false);
+
+// find a partition number p such that the len can be divided
+// to p partitions with each partition has the size len / p.
+int32_t find_suitable_paritions(int32_t len, int32_t parition);
+
+#endif
