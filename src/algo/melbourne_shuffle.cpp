@@ -116,17 +116,15 @@ static void _melbourne_shuffle(const int32_t* arr_in, const int32_t* perm_in,
   const int32_t bucket_len = p_log_len * bucket_idx_len;
 
   shuffle_bucket_p* buckets = new shuffle_bucket_p[num_of_bucket];
-  {
-    int32_t begin_idx = 0;
-    int32_t end_idx;
-    for (int32_t i = 0; i < num_of_bucket; ++i) {
-      if (i == num_of_bucket - 1)
-        end_idx = len;
-      else
-        end_idx = begin_idx + bucket_idx_len;
-      buckets[i] = init_empty_shuffle_bucket(bucket_len, begin_idx, end_idx);
-      begin_idx = end_idx;
-    }
+  int32_t begin_idx = 0;
+  int32_t end_idx;
+  for (int32_t i = 0; i < num_of_bucket; ++i) {
+    if (i == num_of_bucket - 1)
+      end_idx = len;
+    else
+      end_idx = begin_idx + bucket_idx_len;
+    buckets[i] = init_empty_shuffle_bucket(bucket_len, begin_idx, end_idx);
+    begin_idx = end_idx;
   }
 
   _melbourne_shuffle_distribute(arr_in, perm_in, len, buckets, num_of_bucket,
