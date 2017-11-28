@@ -39,6 +39,7 @@ typedef struct ReadObIterator ReadObIterator_t;
 typedef struct ReadObIterator* ReadObIterator_p;
 
 int32_t ob_read_next(ReadObIterator_p ob);
+void reset_read_ob(ReadObIterator_p ob);
 
 struct WriteObIterator {
   CMO_p rt;
@@ -51,6 +52,7 @@ typedef struct WriteObIterator WriteObIterator_t;
 typedef struct WriteObIterator* WriteObIterator_p;
 
 void ob_write_next(WriteObIterator_p ob, int32_t data);
+void reset_write_ob(WriteObIterator_p ob);
 
 struct NobArray {
   CMO_p rt;

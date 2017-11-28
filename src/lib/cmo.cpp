@@ -173,6 +173,9 @@ void ob_write_next(WriteObIterator_p ob, int32_t data)
   }
 }
 
+void reset_read_ob(ReadObIterator_p ob) { ob->shadow_mem_pos = 0; }
+void reset_write_ob(WriteObIterator_p ob) { ob->shadow_mem_pos = 0; }
+
 int32_t nob_read_at(const NobArray_p nob, int32_t addr)
 {
   return nob->shadow_mem[addr];
