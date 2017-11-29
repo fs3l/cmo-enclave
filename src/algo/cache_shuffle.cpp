@@ -117,7 +117,8 @@ void cache_shuffle(const int32_t* arr_in, const int32_t* perm_in,
     return;
   }
 
-  const int32_t S = (int32_t)log2((double)len);
+  // const int32_t S = (int32_t)log2((double)len);
+  const int32_t S = mem_cap / 2;
   const int32_t Q = ceil((1 + epsilon) * S);
   shuffle_bucket_p input = init_shuffle_bucket(arr_in, perm_in, len, 0, len);
 
