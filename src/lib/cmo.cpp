@@ -76,7 +76,7 @@ int32_t max_read_ob_shadow_mem_size(CMO_p _rt, ReadObIterator_p ob)
 }
 int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 {
-  return min(2, ob->len - ob->shadow_mem_pos);
+  return min(48, ob->len - ob->shadow_mem_pos);
 }
 
 void begin_tx(CMO_p rt)

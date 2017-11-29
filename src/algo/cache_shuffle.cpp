@@ -117,12 +117,12 @@ void cache_shuffle(const int32_t* arr_in, const int32_t* perm_in,
     return;
   }
 
-  const int32_t S = max(1, (int32_t)log2((double)len));
+  const int32_t S = (int32_t)log2((double)len);
   const int32_t Q = ceil((1 + epsilon) * S);
   shuffle_bucket_p input = init_shuffle_bucket(arr_in, perm_in, len, 0, len);
 
   // spray
-  int32_t temp_len = find_suitable_partitions(len, Q);
+  int32_t temp_len = find_suitable_partitions(len, min(Q, len));
   shuffle_bucket_p* temp = _cache_shuffle_spray(input, S, temp_len, mem_cap);
 
   // rspary
@@ -137,7 +137,7 @@ void cache_shuffle(const int32_t* arr_in, const int32_t* perm_in,
         new_temp_len += 1;
       } else {
         done = false;
-        new_temp_len += find_suitable_partitions(idx_len, S);
+        new_temp_len += find_suitable_partitions(idx_len, min(S, idx_len));
       }
     }
 
@@ -151,7 +151,7 @@ void cache_shuffle(const int32_t* arr_in, const int32_t* perm_in,
         new_temp[j++] = temp[i];
       } else {
         randomize_shuffle_bucket(temp[i]);
-        int32_t q = find_suitable_partitions(idx_len, S);
+        int32_t q = find_suitable_partitions(idx_len, min(S, idx_len));
         shuffle_bucket_p* temp2 = _cache_shuffle_spray(temp[i], q, q, mem_cap);
         free_shuffle_bucket(temp[i]);
         for (int32_t k = 0; k < q; ++k) new_temp[j++] = temp2[k];
