@@ -1,4 +1,5 @@
 #ifndef CMO_MEM_H
+#define CMO_MEM_H
 
 #include "cmo.h"
 
@@ -58,4 +59,5 @@ void write_element(NobArray_p nob, int32_t addr, T* element)
     nob_write_at(nob, addr + i, data);
   }
 }
+
 #endif
