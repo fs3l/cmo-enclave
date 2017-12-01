@@ -87,9 +87,26 @@ NobArray_p init_nob_array(CMO_p rt, int32_t *data, int32_t len)
 
 void begin_leaky_sec(CMO_p rt) { 
   //TODO size check
+  for (size_t i = 0; i < rt->nobs.size(); ++i) {
+    NobArray_p nob = rt->nobs[i];
+    int inob = nob->shadow_mem;
+    for(int i=0;i<nob->len;i++) {
+      rt->g_shadow_mem[cal_nob(inob+i)] = nob->data[i];
+    }
+  }
   begin_tx(rt); 
 }
-void end_leaky_sec(CMO_p rt) { end_tx(rt); }
+
+void end_leaky_sec(CMO_p rt) { 
+  end_tx(rt);
+  for (size_t i = 0; i < rt->nobs.size(); ++i) {
+    NobArray_p nob = rt->nobs[i];
+    int inob = nob->shadow_mem;
+    for(int i=0;i<nob->len;i++) {
+      nob->data[i] = rt->g_shadow_mem[cal_nob(inob+i)];
+    }
+  }
+}
 int32_t max_read_ob_shadow_mem_size(CMO_p _rt, ReadObIterator_p ob)
 {
   return min(ob->len, ob->len - ob->shadow_mem_pos);
@@ -121,14 +138,6 @@ void begin_tx(CMO_p rt)
       rt->g_shadow_mem[cal_ob_rw(iob+i)] = ob->data[ob->shadow_mem_pos+i];
     }
   }
-  //TODO move this to leaky_begin
-  for (size_t i = 0; i < rt->nobs.size(); ++i) {
-    NobArray_p nob = rt->nobs[i];
-    int inob = nob->shadow_mem;
-    for(int i=0;i<nob->len;i++) {
-      rt->g_shadow_mem[cal_nob(inob+i)] = nob->data[i];
-    }
-  }
 }
 
 void end_tx(CMO_p rt)
@@ -147,14 +156,6 @@ void end_tx(CMO_p rt)
     }
     ob->shadow_mem_pos += ob->iter_pos;
     ob->shadow_mem_len = 0;
-  }
-  //TODO move this to leaky_end
-  for (size_t i = 0; i < rt->nobs.size(); ++i) {
-    NobArray_p nob = rt->nobs[i];
-    int inob = nob->shadow_mem;
-    for(int i=0;i<nob->len;i++) {
-      nob->data[i] = rt->g_shadow_mem[cal_nob(inob+i)];
-    }
   }
 }
 
