@@ -52,9 +52,6 @@ ReadObIterator_p init_read_ob_iterator(CMO_p rt, const int32_t *data,
   ob->rt = rt;
   ob->data = data;
   ob->len = len;
-  ob->shadow_mem = rt->cur_ob;
-  ob->g_shadow_mem = rt->g_shadow_mem;
-  rt->cur_ob+=len;
   ob->shadow_mem_len = ob->shadow_mem_pos = ob->iter_pos = 0;
   rt->r_obs.push_back(ob);
   rt->meta_pos+=1024;
@@ -66,9 +63,6 @@ WriteObIterator_p init_write_ob_iterator(CMO_p rt, int32_t *data, int32_t len)
   WriteObIterator_p ob = (WriteObIterator_p)(&rt->g_shadow_mem[rt->meta_pos]);
   ob->rt = rt;
   ob->data = data;
-  ob->shadow_mem = rt->cur_ob_rw;
-  ob->g_shadow_mem = rt->g_shadow_mem;
-  rt->cur_ob_rw+=len;
   ob->len = len;
   ob->shadow_mem_len = ob->shadow_mem_pos = ob->iter_pos = 0;
   rt->w_obs.push_back(ob);
@@ -82,16 +76,39 @@ NobArray_p init_nob_array(CMO_p rt, int32_t *data, int32_t len)
   nob->rt = rt;
   nob->data = data;
   nob->len = len;
-  nob->shadow_mem = rt->cur_nob;
-  nob->g_shadow_mem = rt->g_shadow_mem;
-  rt->cur_nob+=len;
   rt->nobs.push_back(nob);
   rt->meta_pos+=1024;
   return nob;
 }
 
-void begin_leaky_sec(CMO_p rt) { 
-  //TODO size check
+void begin_leaky_sec(CMO_p rt) {
+  int32_t len_sum = 0;
+  for (size_t i = 0; i < rt->nobs.size(); ++i) {
+    NobArray_p nob = rt->nobs[i];
+    nob->shadow_mem = rt->cur_nob;
+    nob->g_shadow_mem = rt->g_shadow_mem;
+    rt->cur_nob+=nob->len;
+    //TODO cache size dynamically check
+    len_sum+=nob->len;
+    if(len_sum>4096)
+      abort();
+  }
+
+  for (size_t i=0; i<rt->r_obs.size();++i) {
+    ReadObIterator_p ob = rt->r_obs[i];
+    ob->shadow_mem = rt->cur_ob;
+    ob->g_shadow_mem = rt->g_shadow_mem;
+    rt->cur_ob+=ob->len;
+  }
+
+  for (size_t i=0; i<rt->w_obs.size();++i) {
+    WriteObIterator_p ob = rt->w_obs[i];
+    ob->shadow_mem = rt->cur_ob_rw;
+    ob->g_shadow_mem = rt->g_shadow_mem;
+    rt->cur_ob_rw+=ob->len;
+  }
+
+
   for (size_t i = 0; i < rt->nobs.size(); ++i) {
     NobArray_p nob = rt->nobs[i];
     int inob = nob->shadow_mem;
