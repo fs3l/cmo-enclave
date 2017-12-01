@@ -110,7 +110,8 @@ static shuffle_bucket_p* _cache_shuffle_spray(const shuffle_bucket_p input,
 }
 
 void cache_shuffle(const int32_t* arr_in, const int32_t* perm_in,
-                   int32_t* arr_out, int32_t len, double epsilon, int mem_cap)
+                   int32_t* arr_out, int32_t len, double epsilon,
+                   int32_t mem_cap)
 {
   if (len == 1) {
     arr_out[0] = arr_in[0];
