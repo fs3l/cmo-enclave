@@ -39,7 +39,7 @@ void read_element(const NobArray_p nob, int32_t addr, T* element)
 
 // write an element to nob at address addr.
 template <class T>
-void write_element(NobArray_p nob, int32_t addr, T* element)
+void write_element(NobArray_p nob, int32_t addr, const T* element)
 {
   int32_t i, bytes;
   unsigned char* src = (unsigned char*)(element);
