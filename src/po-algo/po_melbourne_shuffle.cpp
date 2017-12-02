@@ -40,7 +40,6 @@ void leakysec_distribute(int* perm, int* data, int* perm_t, int* data_t, int sqr
 		v =   ob_read_next(d);
                 idT = key / (int) sqrtN;
 		list_add(&rev_bucket[idT], key, v);                 // step 10
-		//printf("adding rev_bucket %d k:%d, v:%c\n",idT, key, v);
 		if(rev_bucket[idT].size > max_elems) {                                                                  // step 14
 			printf("OF ERROR : add more than plog(n) elements, rev_bucket %d cur size:%d, max:%d\n", k, rev_bucket[k].size, max_elems);     // step 15
 			break;
@@ -48,11 +47,6 @@ void leakysec_distribute(int* perm, int* data, int* perm_t, int* data_t, int sqr
 	}
 	for(k = 0; k < buckets; k++) {
 		//list_print(&rev_bucket[k]);
-	        /* add dummy elements*/
-		/*while(rev_bucket[k].size < max_elems) {
-			list_add(&rev_bucket[k], -1, -1);                                       // step 18
-		}*/
-		/*seek approprite location ( i.e. within each bucket at ith position )*/
 		write_location = k * max_elems * sqrtN + i * max_elems;
 		l=0;
 		while(l < max_elems) {
@@ -64,7 +58,6 @@ void leakysec_distribute(int* perm, int* data, int* perm_t, int* data_t, int sqr
 			else{
 				ob_write_next(od,-1);
 				ob_write_next(op,-1);
-
 			}
 			l++;
 		}
@@ -82,8 +75,6 @@ void leakysec_cleanup(int* perm_t, int* data_t, int* data, int sqrtN, int max_el
             j=k=l=0;
         int element_per_bucket = sqrtN;
         struct element *e;
-        struct element *bucketM = (struct element *) malloc (element_per_bucket * sizeof(struct element));
-        //struct element *clean_rev_bucket = (struct element *) malloc (max_elems * sizeof(struct element) * (int) sqrtN);    
 
         //preload();
         CMO_p rt = init_cmo_runtime();
@@ -91,10 +82,6 @@ void leakysec_cleanup(int* perm_t, int* data_t, int* data, int sqrtN, int max_el
         ReadObIterator_p p = init_read_ob_iterator(rt, &perm_t[i*max_elems*sqrtN], max_elems*sqrtN);
         NobArray_p od = init_nob_array(rt, data, sqrtN*sqrtN);
 
-	/*for(k = 0; k < max_elems * sqrtN; k++) {                                                        // step 25
-		clean_rev_bucket[k].key = ob_read_next(p);
-		clean_rev_bucket[k].value = ob_read_next(d);
-	}*/
         begin_leaky_sec(rt); 
 	for(j=0; j < max_elems * sqrtN; j++) {
 		/*Skip dummy element identified by -1*/
@@ -104,19 +91,10 @@ void leakysec_cleanup(int* perm_t, int* data_t, int* data, int sqrtN, int max_el
                      continue;                                                                               // step 27
 		}
 		/*sort element within bucket according to perm*/
-		//idT = key % (int) sqrtN;                                    // step 28
-		//bucketM[idT].value = v;
 		nob_write_at(od,key,v);
-	}
-	/* write output array*/
-	for( l=0; l<sqrtN;l++)
-	{
-        //   nob_write_at(od,l,bucketM[l].value);    // step 29
 	}
 
 	end_leaky_sec(rt);
-
-	free(bucketM);
 	free_cmo_runtime(rt);
 }
 
@@ -130,7 +108,6 @@ void melbourn_shuffle(int* data, int* perm, int* data_t, int* perm_t, int* outpu
         printf("size:%d, Blowupfactor:%d\n", size, max_elems);
 
        /* Distribution phase*/
-       // distribute(perm, data, perm_t, data_t, sqrtN, max_elems);
        for(i = 0; i < buckets; i++) {                                                                  // setp 4
 		leakysec_distribute(perm, data, perm_t, data_t, sqrtN, max_elems, i);
         }
@@ -139,7 +116,6 @@ void melbourn_shuffle(int* data, int* perm, int* data_t, int* perm_t, int* outpu
 	//print_array(perm_t, blowupfactor*size);
 
         /* Clean up phase*/
-        //cleanup(perm_t, data_t, data, sqrtN, max_elems);
         for(i = 0; i < buckets; i++) {                                                                                  // step 24
 		leakysec_cleanup(perm_t, data_t,  output, sqrtN,  max_elems, i);
         }
