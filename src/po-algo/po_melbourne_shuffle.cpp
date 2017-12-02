@@ -3,6 +3,7 @@
 #include "./link_list.h"
 #include "po_algo.h"
 #include "cmo.h"
+#include "cmo_queue.h"
 
 struct element {
         int key;
@@ -22,50 +23,41 @@ void leakysec_distribute(int* perm, int* data, int* perm_t, int* data_t, int sqr
         ReadObIterator_p p = init_read_ob_iterator(rt, &perm[i*sqrtN], sqrtN*sqrtN);
         WriteObIterator_p od = init_write_ob_iterator(rt, &data_t[i*max_elems*sqrtN], max_elems*sqrtN);
         WriteObIterator_p op = init_write_ob_iterator(rt, &perm_t[i*max_elems*sqrtN], max_elems*sqrtN);
+	MultiQueue<element> q(rt, sqrtN, sqrtN);
 	
 	int j,k,l, idT, key,v;
 	int element_per_bucket = sqrtN;
 	int buckets = sqrtN;
-	int write_location, list_k, list_v;
-    	struct list_head* rev_bucket;
+	//int list_k, list_v;
+    	struct element e;
 
         //preload();
 	begin_leaky_sec(rt);
-	rev_bucket = (struct list_head *) malloc (sizeof(struct list_head) * sqrtN); // allocate sqrt(input_size) number of link list heads to hold rev_buckets    
+	/*rev_bucket = (struct list_head *) malloc (sizeof(struct list_head) * sqrtN); // allocate sqrt(input_size) number of link list heads to hold rev_buckets    
 	for(l = 0; l < sqrtN; l++) {                   // setp 4 
 		list_init(&rev_bucket[l]);
-	}
+	}*/
 	for(j = 0; j < element_per_bucket; j++) {                                               // step 7
-		key =  ob_read_next(p);                               // step 9
-		v =   ob_read_next(d);
-                idT = key / (int) sqrtN;
-		list_add(&rev_bucket[idT], key, v);                 // step 10
-		if(rev_bucket[idT].size > max_elems) {                                                                  // step 14
-			printf("OF ERROR : add more than plog(n) elements, rev_bucket %d cur size:%d, max:%d\n", k, rev_bucket[k].size, max_elems);     // step 15
-			break;
-		}
+		if (q.full()) cmo_abort(rt, "melbourne_shuffle: queue full");
+		e.key =  ob_read_next(p);                               // step 9
+		e.value =   ob_read_next(d);
+                idT = e.key / (int) sqrtN;                 // step 10
+		q.push_back(idT,e);
 	}
 	for(k = 0; k < buckets; k++) {
-		//list_print(&rev_bucket[k]);
-		write_location = k * max_elems * sqrtN + i * max_elems;
-		l=0;
-		while(l < max_elems) {
-		       if(rev_bucket[k].size != 0){
-                        	list_remove(&rev_bucket[k], &list_k, &list_v);
-				ob_write_next(op, list_k);
-				ob_write_next(od, list_v);
+		for(l=0; l < max_elems; l++) {
+			e.key=e.value=-1;
+		       if(!q.empty(k)){
+				q.front(k,&e);
+				q.pop_front(k);
 			}
-			else{
-				ob_write_next(od,-1);
-				ob_write_next(op,-1);
-			}
-			l++;
+			ob_write_next(op, e.key);
+			ob_write_next(od, e.value);
 		}
 	}
 	end_leaky_sec(rt);
 	reset_write_ob(od);
 	reset_write_ob(op);
-	free(rev_bucket);
 	free_cmo_runtime(rt);
 }
 
