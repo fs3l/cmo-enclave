@@ -128,6 +128,10 @@ void end_leaky_sec(CMO_p rt) {
       nob->data[i] = rt->g_shadow_mem[cal_nob(inob+i)];
     }
   }
+  rt->meta_pos=0;
+  rt->cur_ob=0;
+  rt->cur_ob_rw=0;
+  rt->cur_nob=0;
 }
 int32_t max_read_ob_shadow_mem_size(CMO_p _rt, ReadObIterator_p ob)
 {
