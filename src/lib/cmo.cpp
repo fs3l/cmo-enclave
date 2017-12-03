@@ -98,14 +98,16 @@ void begin_leaky_sec(CMO_p rt) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem = rt->cur_ob;
     ob->g_shadow_mem = rt->g_shadow_mem;
-    rt->cur_ob+=ob->len;
+    //rt->cur_ob+=ob->len;
+    rt->cur_ob+=48;
   }
 
   for (size_t i=0; i<rt->w_obs.size();++i) {
     WriteObIterator_p ob = rt->w_obs[i];
     ob->shadow_mem = rt->cur_ob_rw;
     ob->g_shadow_mem = rt->g_shadow_mem;
-    rt->cur_ob_rw+=ob->len;
+    //rt->cur_ob_rw+=ob->len;
+    rt->cur_ob+=48;
   }
 
 
@@ -135,7 +137,7 @@ void end_leaky_sec(CMO_p rt) {
 }
 int32_t max_read_ob_shadow_mem_size(CMO_p _rt, ReadObIterator_p ob)
 {
-  return min(ob->len, ob->len - ob->shadow_mem_pos);
+  return min(48, ob->len - ob->shadow_mem_pos);
 }
 int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 {
@@ -202,7 +204,7 @@ void begin_tx(CMO_p rt)
       "add    $4, %%rcx\n\t"
       "jmp    loop_ep_%=\n\t"
       "endloop_ep_%=:\n\t"
-      "xbegin coda_abort_handler\n\t"
+      //"xbegin coda_abort_handler\n\t"
       "mov $0, %%eax\n\t"
       "mov %%rdi, %%rcx\n\t"
       "loop_ip_%=:\n\t"
@@ -219,7 +221,7 @@ void begin_tx(CMO_p rt)
 
 void end_tx(CMO_p rt)
 {
-  __asm__("xend\n\t");
+  //__asm__("xend\n\t");
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem_pos += ob->iter_pos;
