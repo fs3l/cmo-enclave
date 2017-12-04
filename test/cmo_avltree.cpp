@@ -53,16 +53,16 @@ BOOST_AUTO_TEST_CASE(avl_map_test)
   }
   for (int32_t i = 0; i < 10; ++i) {
     if (i % 2 == 0) {
-      BOOST_CHECK(m.find(i) == -1);
+      BOOST_CHECK(m.find(i) == 0);
     } else {
       addr = m.find(i);
-      BOOST_CHECK(addr != -1);
+      BOOST_CHECK(addr != 0);
       m.get_value(addr, &value);
       BOOST_CHECK(value == i * 100);
     }
   }
   for (int32_t i = 0; i < 10; ++i) m.remove(i);
-  for (int32_t i = 0; i < 10; ++i) BOOST_CHECK(m.find(i) == -1);
+  for (int32_t i = 0; i < 10; ++i) BOOST_CHECK(m.find(i) == 0);
   end_leaky_sec(rt);
 
   free_cmo_runtime(rt);

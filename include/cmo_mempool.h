@@ -134,6 +134,13 @@ public:
   {
     write_element<E>(nob, addr + 1, element);
   }
+  // return the address of the first element (used to enumerate all elements)
+  int32_t begin_address() const
+  {
+    return get_meta_begin_addr(USED_BLOCK_META_ADDR);
+  }
+  // next address
+  int32_t next_address(int32_t addr) const { return get_block_next_addr(addr); }
 
 private:
   int32_t get_meta_begin_addr(int32_t meta_addr) const

@@ -40,8 +40,8 @@ public:
   AVLTree(CMO_p rt, int32_t capacity) : mem(rt, capacity)
   {
     extra_data = new int32_t[2];
-    extra_data[0] = -1;  // root addr
-    extra_data[1] = 0;   // num of element
+    extra_data[0] = 0;  // root addr
+    extra_data[1] = 0;  // num of element
     nob = init_nob_array(rt, extra_data, 2);
   }
   ~AVLTree() { delete[] extra_data; }
@@ -55,7 +55,7 @@ public:
   int32_t find(const Key& key) const
   {
     int32_t addr = get_root();
-    while (addr != -1) {
+    while (addr != 0) {
       Key _key = node_get_key(addr);
       if (key == _key) break;
       avl_tree_node_t meta = node_get_meta(addr);
@@ -76,22 +76,10 @@ public:
     mem.template write_block<Node>(addr, node);
   }
 
-  void print() const
-  {
-    printf("root=%d, size=%d\n", get_root(), size());
-    print_at(get_root());
-    printf("\n");
-  }
-  void print_at(int32_t addr) const
-  {
-    if (addr == -1) return;
-    Node node;
-    get_node(addr, &node);
-    printf("%d ", node.key);
-    print_at(node.meta.left_child);
-    print_at(node.meta.right_child);
-  }
   int32_t size() const { return nob_read_at(nob, 1); }
+
+  int32_t begin_address() const { return mem.begin_address(); }
+  int32_t next_address(int32_t addr) const { return mem.next_address(addr); }
 
 private:
   int32_t get_root() const { return nob_read_at(nob, 0); }
@@ -116,20 +104,20 @@ private:
   }
   int32_t node_height(int32_t addr) const
   {
-    if (addr == -1) return 0;
+    if (addr == 0) return 0;
     return node_get_meta(addr).height;
   }
   int32_t node_balance(int32_t addr) const
   {
-    if (addr == -1) return 0;
+    if (addr == 0) return 0;
     avl_tree_node_t meta = node_get_meta(addr);
     return node_height(meta.left_child) - node_height(meta.right_child);
   }
   int32_t find_min_key_node(int32_t addr) const
   {
-    if (addr == -1) return addr;
+    if (addr == 0) return addr;
     avl_tree_node_t meta = node_get_meta(addr);
-    if (meta.left_child == -1)
+    if (meta.left_child == 0)
       return addr;
     else
       return find_min_key_node(meta.left_child);
@@ -137,11 +125,11 @@ private:
 
   int32_t insert_at(int32_t addr, const Node& node)
   {
-    if (addr == -1) {
+    if (addr == 0) {
       nob_write_at(nob, 1, size() + 1);
       Node _node = node;
-      _node.meta.left_child = -1;
-      _node.meta.right_child = -1;
+      _node.meta.left_child = 0;
+      _node.meta.right_child = 0;
       _node.meta.height = 1;
       int32_t _addr = mem.alloc_block();
       set_node(_addr, &_node);
@@ -183,7 +171,7 @@ private:
   }
   int32_t remove_at(int32_t addr, const Key& key)
   {
-    if (addr == -1) return addr;
+    if (addr == 0) return addr;
 
     avl_tree_node_t meta = node_get_meta(addr);
     Key _key = node_get_key(addr);
@@ -194,11 +182,11 @@ private:
       meta.right_child = remove_at(meta.right_child, key);
       node_set_meta(addr, &meta);
     } else {
-      if (meta.left_child == -1) {
+      if (meta.left_child == 0) {
         nob_write_at(nob, 1, size() - 1);
         mem.free_block(addr);
         return meta.right_child;
-      } else if (meta.right_child == -1) {
+      } else if (meta.right_child == 0) {
         nob_write_at(nob, 1, size() - 1);
         mem.free_block(addr);
         return meta.left_child;
@@ -211,7 +199,7 @@ private:
       set_node(addr, &_node);
     }
 
-    if (addr == -1) return addr;
+    if (addr == 0) return addr;
 
     meta = node_get_meta(addr);
     meta.height =
@@ -289,9 +277,16 @@ public:
     tree.insert(node);
   }
   void remove(const T& element) { tree.remove(element); }
-  bool find(const T& element) const { return tree.find(element) != -1; }
+  bool find(const T& element) const { return tree.find(element) != 0; }
   int32_t size() const { return tree.size(); }
-  void print() const { tree.print(); }
+  void get_element(int32_t addr, T* element) const
+  {
+    struct avl_set_node<T> node;
+    tree.get_node(addr, &node);
+    *element = node.key;
+  }
+  int32_t begin_address() const { return tree.begin_address(); }
+  int32_t next_address(int32_t addr) const { return tree.next_address(addr); }
 
 private:
   AVLTree<T, struct avl_set_node<T>> tree;
@@ -314,6 +309,19 @@ public:
   void remove(const K& key) { tree.remove(key); }
   int32_t find(const K& key) const { return tree.find(key); }
   int32_t size() const { return tree.size(); }
+  void get_element(int32_t addr, K* key, V* value) const
+  {
+    struct avl_map_node<K, V> node;
+    tree.get_node(addr, &node);
+    *key = node.key;
+    *value = node.value;
+  }
+  void get_key(int32_t addr, K* key) const
+  {
+    struct avl_map_node<K, V> node;
+    tree.get_node(addr, &node);
+    *key = node.key;
+  }
   void get_value(int32_t addr, V* value) const
   {
     struct avl_map_node<K, V> node;
@@ -327,6 +335,8 @@ public:
     node.value = value;
     tree.set_node(addr, &node);
   }
+  int32_t begin_address() const { return tree.begin_address(); }
+  int32_t next_address(int32_t addr) const { return tree.next_address(addr); }
 
 private:
   AVLTree<K, struct avl_map_node<K, V>> tree;
