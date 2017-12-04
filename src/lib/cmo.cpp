@@ -22,7 +22,7 @@ int32_t cal_ob_rw(int32_t offset)
 
 int32_t cal_nob(int32_t offset)
 {
-  return (offset / 640) * 1024 + offset % 640 + 111;
+  return (offset / 640) * 1024 + offset % 640 + 112;
 }
 
 CMO_p init_cmo_runtime() { 
@@ -93,23 +93,25 @@ void begin_leaky_sec(CMO_p rt) {
     if(len_sum>8192)
       abort();
   }
-
+  printf("nobs count =%d\n",rt->nobs.size());
   for (size_t i=0; i<rt->r_obs.size();++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem = rt->cur_ob;
     ob->g_shadow_mem = rt->g_shadow_mem;
     //rt->cur_ob+=ob->len;
-    rt->cur_ob+=48;
+    rt->cur_ob+=192;
   }
 
+  printf("obs count =%d\n",rt->r_obs.size());
   for (size_t i=0; i<rt->w_obs.size();++i) {
     WriteObIterator_p ob = rt->w_obs[i];
     ob->shadow_mem = rt->cur_ob_rw;
     ob->g_shadow_mem = rt->g_shadow_mem;
     //rt->cur_ob_rw+=ob->len;
-    rt->cur_ob+=48;
+    rt->cur_ob_rw+=384;
   }
 
+  printf("wobs count =%d\n",rt->w_obs.size());
 
   for (size_t i = 0; i < rt->nobs.size(); ++i) {
     NobArray_p nob = rt->nobs[i];
@@ -137,12 +139,12 @@ void end_leaky_sec(CMO_p rt) {
 }
 int32_t max_read_ob_shadow_mem_size(CMO_p _rt, ReadObIterator_p ob)
 {
-  return min(48, ob->len - ob->shadow_mem_pos);
+  return min(192, ob->len - ob->shadow_mem_pos);
 }
 int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 {
   //TODO
-  return min(48, ob->len - ob->shadow_mem_pos);
+  return min(384, ob->len - ob->shadow_mem_pos);
 }
 
 void begin_tx(CMO_p rt)
@@ -168,7 +170,7 @@ void begin_tx(CMO_p rt)
       rt->g_shadow_mem[cal_ob_rw(iob+i)] = ob->data[ob->shadow_mem_pos+i];
     }
   }
-
+/*
   __asm__(
       "mov %%rax,%0\n\t"
       "mov %%rbx,%1\n\t"
@@ -205,7 +207,7 @@ void begin_tx(CMO_p rt)
       "add    $4, %%rcx\n\t"
       "jmp    loop_ep_%=\n\t"
       "endloop_ep_%=:\n\t"
-      //"xbegin coda_abort_handler\n\t"
+      "xbegin coda_abort_handler\n\t"
       "mov $0, %%eax\n\t"
       "mov %%rdi, %%rcx\n\t"
       "loop_ip_%=:\n\t"
@@ -217,11 +219,12 @@ void begin_tx(CMO_p rt)
       "jmp    loop_ip_%=\n\t"
       "endloop_ip_%=:\n\t"
       ::
-      :);
+      :);*/
 }
 
 void end_tx(CMO_p rt)
 {
+  printf("enter %s\n",__func__);
   //__asm__("xend\n\t");
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
