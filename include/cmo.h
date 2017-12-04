@@ -12,6 +12,18 @@ struct CMO {
   std::vector<struct ReadObIterator*> r_obs;
   std::vector<struct WriteObIterator*> w_obs;
   std::vector<struct NobArray*> nobs;
+  //the global shadow memory
+  // 0-15 -  meta data
+  // 16-63 - ob data r
+  // 64 - 111 - ob data rw
+  // 112 - 639 - nob data
+  // 1024*1023 + 512 - 1024*1024-1 stack frame
+  uint32_t g_shadow_mem[1024*1024] __attribute__((aligned(4096)));
+  //the free slot for meta, currently, we allocated one cache line for one ob/nob object
+  int32_t meta_pos;
+  int32_t cur_ob;
+  int32_t cur_ob_rw;
+  int32_t cur_nob;
 };
 typedef struct CMO CMO_t;
 typedef struct CMO* CMO_p;
@@ -32,7 +44,8 @@ struct ReadObIterator {
   CMO_p rt;
   const int32_t* data;
   int32_t len;
-  int32_t* shadow_mem;
+  int32_t shadow_mem;
+  uint32_t *g_shadow_mem;
   int32_t shadow_mem_len, shadow_mem_pos, iter_pos;
 };
 typedef struct ReadObIterator ReadObIterator_t;
@@ -45,7 +58,8 @@ struct WriteObIterator {
   CMO_p rt;
   int32_t* data;
   int32_t len;
-  int32_t* shadow_mem;
+  int32_t shadow_mem;
+  uint32_t *g_shadow_mem;
   int32_t shadow_mem_len, shadow_mem_pos, iter_pos;
 };
 typedef struct WriteObIterator WriteObIterator_t;
@@ -58,7 +72,8 @@ struct NobArray {
   CMO_p rt;
   int32_t* data;
   int32_t len;
-  int32_t* shadow_mem;
+  int32_t shadow_mem;
+  uint32_t *g_shadow_mem;
 };
 typedef struct NobArray NobArray_t;
 typedef struct NobArray* NobArray_p;

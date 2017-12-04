@@ -5,7 +5,7 @@
 
 BOOST_AUTO_TEST_CASE(cache_shuffle_test)
 {
-  int32_t len = 100;
+  int32_t len = 80;
   int32_t* input = gen_random_sequence(len);
   int32_t* output = new int32_t[len];
   cache_shuffle(input, input, output, len);

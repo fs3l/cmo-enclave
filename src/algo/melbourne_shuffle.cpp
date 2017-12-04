@@ -1,9 +1,8 @@
+#include "./shuffle_bucket.h"
 #include "algo.h"
 #include "cmo.h"
 #include "cmo_queue.h"
 #include "utils.h"
-
-#include "./shuffle_bucket.h"
 
 static void _melbourne_shuffle_distribute(const int32_t* arr_in,
                                           const int32_t* perm_in, int32_t len,
