@@ -14,15 +14,15 @@ void free_write_ob(WriteObIterator_p ob);
 void free_nob(NobArray_p nob);
 int32_t max_read_ob_shadow_mem_size(CMO_p rt, ReadObIterator_p ob);
 int32_t max_write_ob_shadow_mem_size(CMO_p rt, WriteObIterator_p ob);
-int32_t cal_ob(int32_t offset) { return (offset / 16) * 1024 + offset % 16 + 16; }
+int32_t cal_ob(int32_t offset) { return (offset / 48) * 1024 + offset % 48 + 16; }
 int32_t cal_ob_rw(int32_t offset)
 {
-  return (offset / 48) * 1024 + offset % 48 + 32;
+  return (offset / 48) * 1024 + offset % 48 + 64;
 }
 
 int32_t cal_nob(int32_t offset)
 {
-  return (offset / 640) * 1024 + offset % 640 + 80;
+  return (offset / 640) * 1024 + offset % 640 + 111;
 }
 
 CMO_p init_cmo_runtime() { 
@@ -90,7 +90,7 @@ void begin_leaky_sec(CMO_p rt) {
     rt->cur_nob+=nob->len;
     //TODO cache size dynamically check
     len_sum+=nob->len;
-    if(len_sum>4096)
+    if(len_sum>8192)
       abort();
   }
 
@@ -147,12 +147,13 @@ int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 
 void begin_tx(CMO_p rt)
 {
-  printf("context address=%p\n",coda_context);
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem_len = max_read_ob_shadow_mem_size(rt, ob);
     ob->iter_pos = 0;
     int iob = ob->shadow_mem;
+
+    //TODO REMOVE memory copy here!!! 
     for(int i=0;i<ob->shadow_mem_len;i++) {
       rt->g_shadow_mem[cal_ob(iob+i)] = ob->data[ob->shadow_mem_pos+i];
     }
