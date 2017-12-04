@@ -1,9 +1,8 @@
+#include "./shuffle_bucket.h"
 #include "algo.h"
 #include "cmo.h"
 #include "cmo_queue.h"
 #include "utils.h"
-#include <stdio.h>
-#include "./shuffle_bucket.h"
 
 static void _melbourne_shuffle_distribute(const int32_t* arr_in,
                                           const int32_t* perm_in, int32_t len,
@@ -30,7 +29,6 @@ static void _melbourne_shuffle_distribute(const int32_t* arr_in,
   write_idx = 0;
   while (read_idx < len) {
     begin_leaky_sec(rt);
-    int count = 0;
     for (i = 0; i < num_of_bucket && read_idx < len; ++i) {
       e.value = ob_read_next(arr_in_ob);
       e.perm = ob_read_next(perm_in_ob);
@@ -132,10 +130,9 @@ void melbourne_shuffle(const int32_t* arr_in, const int32_t* perm_in,
   int32_t* arr_random = new int32_t[len];
   int32_t* perm_random = new int32_t[len];
 
-//  _melbourne_shuffle(arr_in, random, arr_random, len, blow_up_factor);
-//  _melbourne_shuffle(perm_in, random, perm_random, len, blow_up_factor);
-//  _melbourne_shuffle(arr_random, perm_random, arr_out, len, blow_up_factor);
-  _melbourne_shuffle(arr_in, perm_in, arr_out, len, blow_up_factor);
+  _melbourne_shuffle(arr_in, random, arr_random, len, blow_up_factor);
+  _melbourne_shuffle(perm_in, random, perm_random, len, blow_up_factor);
+  _melbourne_shuffle(arr_random, perm_random, arr_out, len, blow_up_factor);
 
   delete[] random;
   delete[] arr_random;
