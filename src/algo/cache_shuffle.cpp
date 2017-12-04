@@ -7,11 +7,9 @@
 
 // S: number of elements to be read in one pass.
 // num_of_bucket: number of buckets to be returned.
-// mem_cap: max number of element can be stored in the nob.
 static shuffle_bucket_p* _cache_shuffle_spray(const shuffle_bucket_p input,
                                               const int32_t S,
-                                              const int32_t num_of_bucket,
-                                              const int32_t mem_cap)
+                                              const int32_t num_of_bucket)
 {
   const int32_t len = input->len;
   const int32_t begin_idx = input->begin_idx;
@@ -32,7 +30,7 @@ static shuffle_bucket_p* _cache_shuffle_spray(const shuffle_bucket_p input,
   ReadObIterator_p read_ob = shuffle_bucket_init_read_ob(input, rt);
   WriteObIterator_p write_ob =
       init_write_ob_iterator(rt, write_output, write_output_len);
-  MultiQueue<shuffle_element_t> q(rt, mem_cap, num_of_bucket);
+  MultiQueue<shuffle_element_t> q(rt, 2 * S, num_of_bucket);
 
   int32_t i, read_idx, write_idx, bucket_idx, write_output_idx;
   shuffle_element_t e;
@@ -119,13 +117,13 @@ void cache_shuffle(const int32_t* arr_in, const int32_t* perm_in,
   }
 
   // const int32_t S = (int32_t)log2((double)len);
-  const int32_t S = mem_cap / 2;
+  const int32_t S = min(len, mem_cap / 2);
   const int32_t Q = ceil((1 + epsilon) * S);
   shuffle_bucket_p input = init_shuffle_bucket(arr_in, perm_in, len, 0, len);
 
   // spray
   int32_t temp_len = find_suitable_partitions(len, min(Q, len));
-  shuffle_bucket_p* temp = _cache_shuffle_spray(input, S, temp_len, mem_cap);
+  shuffle_bucket_p* temp = _cache_shuffle_spray(input, S, temp_len);
 
   // rspary
   bool done;
@@ -154,7 +152,7 @@ void cache_shuffle(const int32_t* arr_in, const int32_t* perm_in,
       } else {
         randomize_shuffle_bucket(temp[i]);
         int32_t q = find_suitable_partitions(idx_len, min(S, idx_len));
-        shuffle_bucket_p* temp2 = _cache_shuffle_spray(temp[i], q, q, mem_cap);
+        shuffle_bucket_p* temp2 = _cache_shuffle_spray(temp[i], q, q);
         free_shuffle_bucket(temp[i]);
         for (int32_t k = 0; k < q; ++k) new_temp[j++] = temp2[k];
         delete[] temp2;
