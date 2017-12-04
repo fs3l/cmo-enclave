@@ -20,4 +20,4 @@ coda_abort_handler:
   mov 72(%r15), %r11
   mov 80(%r15), %r12
   mov 88(%r15), %r13
-  jmp %r14
+  jmp *%r14
