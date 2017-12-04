@@ -123,14 +123,16 @@ public:
     }
   }
   // read block
-  void read_block(int32_t addr, T* element) const
+  template <class E>
+  void read_block(int32_t addr, E* element) const
   {
-    read_element<T>(nob, addr + 1, element);
+    read_element<E>(nob, addr + 1, element);
   }
   // write block
-  void write_block(int32_t addr, const T* element)
+  template <class E>
+  void write_block(int32_t addr, const E* element)
   {
-    write_element<T>(nob, addr + 1, element);
+    write_element<E>(nob, addr + 1, element);
   }
 
 private:
