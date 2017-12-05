@@ -9,7 +9,7 @@ BOOST_AUTO_TEST_CASE(mempool_test)
 {
   CMO_p rt = init_cmo_runtime();
 
-  MemeryPool<int32_t> pool(rt, LEN);
+  MemoryPool<int32_t> pool(rt, LEN);
 
   begin_leaky_sec(rt);
   BOOST_CHECK(pool.empty());

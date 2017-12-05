@@ -33,7 +33,7 @@ template <class Key, class Node>
 class AVLTree
 {
 public:
-  MemeryPool<Node> mem;
+  MemoryPool<Node> mem;
   int32_t* extra_data;
   NobArray_t* nob;
   CMO_p rt;

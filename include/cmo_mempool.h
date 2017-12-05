@@ -29,20 +29,20 @@
  */
 
 template <class T>
-class MemeryPool
+class MemoryPool
 {
   const int32_t FREE_BLOCK_META_ADDR = 1;
   const int32_t USED_BLOCK_META_ADDR = 2;
 
 public:
-  MemeryPool(CMO_p rt, int32_t capacity)
+  MemoryPool(CMO_p rt, int32_t capacity)
   {
-    if (capacity > UINT16_MAX) cmo_abort(rt, "fail to initialize MemeryPool");
+    if (capacity > UINT16_MAX) cmo_abort(rt, "fail to initialize MemoryPool");
     const int32_t element_block_size = calc_element_block_size<T>();
     int32_t data_len = 3;                             // meta data
     data_len += capacity * (1 + element_block_size);  // block data
 
-    if (data_len > UINT16_MAX) cmo_abort(rt, "fail to initialize MemeryPool");
+    if (data_len > UINT16_MAX) cmo_abort(rt, "fail to initialize MemoryPool");
     data = new int32_t[data_len];
 
     // set meta data
@@ -62,7 +62,7 @@ public:
     }
     nob = init_nob_array(rt, data, data_len);
   }
-  ~MemeryPool() { delete[] data; }
+  ~MemoryPool() { delete[] data; }
   void reset_nob(CMO_p rt) { nob = init_nob_array(rt, data, data[0] >> 16); }
   // return true if the pool is empty
   bool empty() const { return get_meta_begin_addr(USED_BLOCK_META_ADDR) == 0; }
