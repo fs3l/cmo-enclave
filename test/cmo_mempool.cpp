@@ -3,7 +3,7 @@
 #include "cmo.h"
 #include "cmo_mempool.h"
 
-#define LEN 10
+#define LEN 100
 
 BOOST_AUTO_TEST_CASE(mempool_test)
 {
