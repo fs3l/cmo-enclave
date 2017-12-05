@@ -3,9 +3,10 @@
 #include "cmo.h"
 #include "cmo_avltree.h"
 
+const int32_t N = 100;
+
 BOOST_AUTO_TEST_CASE(avl_set_test)
 {
-  const int32_t N = 100;
   CMO_p rt = init_cmo_runtime();
 
   AVLSet<int32_t> s(rt, N);
