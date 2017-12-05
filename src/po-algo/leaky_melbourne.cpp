@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <math.h>
+#include <sys/mman.h>
 #include "po_algo.h"
 #include "cmo.h"
 #include "cmo_queue.h"
@@ -16,6 +17,26 @@ void print_array(int* arr, int size)
         printf("id:%d, vl:%d \n",i,arr[i]);
 }
 
+int preload(int* arr, int32_t len)
+{
+	if(mlock(arr, len) == -1) {
+		perror("mlock");
+		return (-1);
+	}
+	//printf("success to lock stack mem at:%p, len=%zd\n", arr, len);
+
+}
+
+int offload(int* arr, int32_t len)
+{
+        if(munlock(arr, len) == -1) {
+                perror("munlock");
+                return (-1);
+        }
+        //printf("success to unlock stack mem at:%p, len=%zd\n", arr, len);
+
+}
+
 void leakysec_distribute(int* perm, int* data, int* perm_t, int* data_t, int sqrtN, int max_elems, int i)
 {
 	CMO_p rt = init_cmo_runtime();
@@ -28,15 +49,14 @@ void leakysec_distribute(int* perm, int* data, int* perm_t, int* data_t, int sqr
 	int j,k,l, idT, key,v;
 	int element_per_bucket = sqrtN;
 	int buckets = sqrtN;
-	//int list_k, list_v;
     	struct element e;
 
-        //preload();
+        preload(&data[i*sqrtN], sqrtN);
+	preload(&perm[i*sqrtN], sqrtN);
+	preload(&data_t[i*max_elems*sqrtN], max_elems*sqrtN);
+	preload(&perm_t[i*max_elems*sqrtN], max_elems*sqrtN);
+
 	begin_leaky_sec(rt);
-	/*rev_bucket = (struct list_head *) malloc (sizeof(struct list_head) * sqrtN); // allocate sqrt(input_size) number of link list heads to hold rev_buckets    
-	for(l = 0; l < sqrtN; l++) {                   // setp 4 
-		list_init(&rev_bucket[l]);
-	}*/
 	for(j = 0; j < element_per_bucket; j++) {                                               // step 7
 		if (q.full()) cmo_abort(rt, "melbourne_shuffle: queue full");
 		e.key =  ob_read_next(p);                               // step 9
@@ -55,6 +75,10 @@ void leakysec_distribute(int* perm, int* data, int* perm_t, int* data_t, int sqr
 			ob_write_next(od, e.value);
 		}
 	}
+	offload(&data[i*sqrtN], sqrtN);
+	offload(&perm[i*sqrtN], sqrtN);
+	offload(&data_t[i*max_elems*sqrtN], max_elems*sqrtN);
+	offload(&perm_t[i*max_elems*sqrtN], max_elems*sqrtN);
 	end_leaky_sec(rt);
 	reset_write_ob(od);
 	reset_write_ob(op);
@@ -68,7 +92,9 @@ void leakysec_cleanup(int* perm_t, int* data_t, int* data, int sqrtN, int max_el
         int element_per_bucket = sqrtN;
         struct element *e;
 
-        //preload();
+        preload(&data_t[i*max_elems*sqrtN], max_elems*sqrtN);
+	preload(&perm_t[i*max_elems*sqrtN], max_elems*sqrtN);
+	preload(&data[i*sqrtN],sqrtN);
         CMO_p rt = init_cmo_runtime();
         ReadObIterator_p d = init_read_ob_iterator(rt, &data_t[i*max_elems*sqrtN], max_elems*sqrtN);
         ReadObIterator_p p = init_read_ob_iterator(rt, &perm_t[i*max_elems*sqrtN], max_elems*sqrtN);
@@ -86,41 +112,9 @@ void leakysec_cleanup(int* perm_t, int* data_t, int* data, int sqrtN, int max_el
 		nob_write_at(od,key,v);
 	}
 
+	offload(&data_t[i*max_elems*sqrtN], max_elems*sqrtN);
+	offload(&perm_t[i*max_elems*sqrtN], max_elems*sqrtN);
+	offload(&data[i*sqrtN], sqrtN);
 	end_leaky_sec(rt);
 	free_cmo_runtime(rt);
 }
-
-void melbourn_shuffle(int* data, int* perm, int* data_t, int* perm_t, int* output, int size, int blowupfactor) {
-        long    buckets;
-        int     sqrtN, max_elems;
-	int i;
-
-        buckets = sqrtN = sqrt(size);                           // step 1                                                          // step 2
-        max_elems = blowupfactor;                               //plogn
-        printf("size:%d, Blowupfactor:%d\n", size, max_elems);
-
-       /* Distribution phase*/
-       for(i = 0; i < buckets; i++) {                                                                  // setp 4
-		leakysec_distribute(perm, data, perm_t, data_t, sqrtN, max_elems, i);
-        }
-
-	//print_array(data_t, blowupfactor*size);
-	//print_array(perm_t, blowupfactor*size);
-
-        /* Clean up phase*/
-        for(i = 0; i < buckets; i++) {                                                                                  // step 24
-		leakysec_cleanup(perm_t, data_t,  output, sqrtN,  max_elems, i);
-        }
-        //print_array(output,size);
-}
-
-int po_melbourne_entry(int* perm, int* data, int* output, int size) {
-
-	int sqrtN = sqrt(size);
-	int blowupfactor = 1*log2(size); //plogn
-	int data_t[blowupfactor*size], perm_t[blowupfactor*size];
-
-	melbourn_shuffle(data, perm, data_t, perm_t, output, size, blowupfactor);
-	return 1;
-}
-
