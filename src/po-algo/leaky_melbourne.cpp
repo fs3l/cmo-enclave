@@ -51,7 +51,7 @@ void leakysec_distribute(int* perm, int* data, int* perm_t, int* data_t, int sqr
 	int buckets = sqrtN;
     	struct element e;
 
-        preload(&data[i*sqrtN], sqrtN);
+	preload(&data[i*sqrtN], sqrtN);
 	preload(&perm[i*sqrtN], sqrtN);
 	preload(&data_t[i*max_elems*sqrtN], max_elems*sqrtN);
 	preload(&perm_t[i*max_elems*sqrtN], max_elems*sqrtN);
@@ -61,13 +61,13 @@ void leakysec_distribute(int* perm, int* data, int* perm_t, int* data_t, int sqr
 		if (q.full()) cmo_abort(rt, "melbourne_shuffle: queue full");
 		e.key =  ob_read_next(p);                               // step 9
 		e.value =   ob_read_next(d);
-                idT = e.key / (int) sqrtN;                 // step 10
+		idT = e.key / (int) sqrtN;                 // step 10
 		q.push_back(idT,e);
 	}
 	for(k = 0; k < buckets; k++) {
 		for(l=0; l < max_elems; l++) {
 			e.key=e.value=-1;
-		       if(!q.empty(k)){
+			if(!q.empty(k)){
 				q.front(k,&e);
 				q.pop_front(k);
 			}
@@ -75,11 +75,11 @@ void leakysec_distribute(int* perm, int* data, int* perm_t, int* data_t, int sqr
 			ob_write_next(od, e.value);
 		}
 	}
+	end_leaky_sec(rt);
 	offload(&data[i*sqrtN], sqrtN);
 	offload(&perm[i*sqrtN], sqrtN);
 	offload(&data_t[i*max_elems*sqrtN], max_elems*sqrtN);
 	offload(&perm_t[i*max_elems*sqrtN], max_elems*sqrtN);
-	end_leaky_sec(rt);
 	reset_write_ob(od);
 	reset_write_ob(op);
 	free_cmo_runtime(rt);
@@ -87,34 +87,34 @@ void leakysec_distribute(int* perm, int* data, int* perm_t, int* data_t, int sqr
 
 void leakysec_cleanup(int* perm_t, int* data_t, int* data, int sqrtN, int max_elems, int i)
 {
-        int j,k,l,t1,t2,idT,key,v;
-            j=k=l=0;
-        int element_per_bucket = sqrtN;
-        struct element *e;
+	int j,k,l,t1,t2,idT,key,v;
+		k=l=0;
+	int element_per_bucket = sqrtN;
+	struct element *e;
 
-        preload(&data_t[i*max_elems*sqrtN], max_elems*sqrtN);
+	preload(&data_t[i*max_elems*sqrtN], max_elems*sqrtN);
 	preload(&perm_t[i*max_elems*sqrtN], max_elems*sqrtN);
 	preload(&data[i*sqrtN],sqrtN);
-        CMO_p rt = init_cmo_runtime();
-        ReadObIterator_p d = init_read_ob_iterator(rt, &data_t[i*max_elems*sqrtN], max_elems*sqrtN);
-        ReadObIterator_p p = init_read_ob_iterator(rt, &perm_t[i*max_elems*sqrtN], max_elems*sqrtN);
-        NobArray_p od = init_nob_array(rt, data, sqrtN*sqrtN);
 
-        begin_leaky_sec(rt); 
+	CMO_p rt = init_cmo_runtime();
+	ReadObIterator_p d = init_read_ob_iterator(rt, &data_t[i*max_elems*sqrtN], max_elems*sqrtN);
+	ReadObIterator_p p = init_read_ob_iterator(rt, &perm_t[i*max_elems*sqrtN], max_elems*sqrtN);
+	NobArray_p od = init_nob_array(rt, data, sqrtN*sqrtN);
+
+	begin_leaky_sec(rt); 
 	for(j=0; j < max_elems * sqrtN; j++) {
 		/*Skip dummy element identified by -1*/
-                key = ob_read_next(d);
-                v = ob_read_next(p); 
+		key = ob_read_next(d);
+		v = ob_read_next(p); 
 		if(key == -1) {	
-                     continue;                                                                               // step 27
+			continue;                                                                               // step 27
 		}
 		/*sort element within bucket according to perm*/
 		nob_write_at(od,key,v);
 	}
-
+	end_leaky_sec(rt);
 	offload(&data_t[i*max_elems*sqrtN], max_elems*sqrtN);
 	offload(&perm_t[i*max_elems*sqrtN], max_elems*sqrtN);
 	offload(&data[i*sqrtN], sqrtN);
-	end_leaky_sec(rt);
 	free_cmo_runtime(rt);
 }
