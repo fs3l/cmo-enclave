@@ -36,6 +36,7 @@ public:
   MemeryPool<Node> mem;
   int32_t* extra_data;
   NobArray_t* nob;
+  CMO_p rt;
 
   AVLTree(CMO_p rt, int32_t capacity) : mem(rt, capacity)
   {
@@ -43,12 +44,14 @@ public:
     extra_data[0] = 0;  // root addr
     extra_data[1] = 0;  // num of element
     nob = init_nob_array(rt, extra_data, 2);
+    this->rt = rt;
   }
   ~AVLTree() { delete[] extra_data; }
   void reset_nob(CMO_p rt)
   {
     mem.reset_nob(rt);
     nob = init_nob_array(rt, extra_data, 2);
+    this->rt = rt;
   }
   void insert(const Node& node) { set_root(insert_at(get_root(), node)); }
   void remove(const Key& key) { set_root(remove_at(get_root(), key)); }
@@ -131,6 +134,7 @@ private:
       _node.meta.left_child = 0;
       _node.meta.right_child = 0;
       _node.meta.height = 1;
+      if (mem.full()) cmo_abort(rt, "AVLTree: memory is full");
       int32_t _addr = mem.alloc_block();
       set_node(_addr, &_node);
       return _addr;
@@ -140,8 +144,10 @@ private:
     Key addr_key = node_get_key(addr);
     if (node.key < addr_key)
       meta.left_child = insert_at(meta.left_child, node);
-    else
+    else if (node.key > addr_key)
       meta.right_child = insert_at(meta.right_child, node);
+    else
+      return addr;
 
     meta.height =
         1 + ::max(node_height(meta.left_child), node_height(meta.right_child));
