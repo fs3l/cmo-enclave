@@ -8,6 +8,8 @@
 #include "cmo_mempool.h"
 #include "utils.h"
 
+#include <stdio.h>
+
 struct avl_tree_node {
   int16_t left_child;
   int16_t right_child;
@@ -245,8 +247,8 @@ private:
     meta.right_child = tmp;
     meta.height =
         1 + ::max(node_height(meta.left_child), node_height(meta.right_child));
-    right_meta.height = 1 + ::max(node_height(right_meta.left_child),
-                                  node_height(right_meta.right_child));
+    right_meta.height =
+        1 + ::max(meta.height, node_height(right_meta.right_child));
     node_set_meta(addr, &meta);
     node_set_meta(right_addr, &right_meta);
     return right_addr;
@@ -261,11 +263,37 @@ private:
     meta.left_child = tmp;
     meta.height =
         1 + ::max(node_height(meta.left_child), node_height(meta.right_child));
-    left_meta.height = 1 + ::max(node_height(left_meta.left_child),
-                                 node_height(left_meta.right_child));
+    left_meta.height =
+        1 + ::max(node_height(left_meta.left_child), meta.height);
     node_set_meta(addr, &meta);
     node_set_meta(left_addr, &left_meta);
     return left_addr;
+  }
+
+  void print() const
+  {
+    printf("--------\n");
+    print_at(get_root(), 0);
+    if (!is_balance()) printf("unbalance!!\n");
+  }
+  void print_at(int32_t addr, int32_t indent) const
+  {
+    if (addr == 0) return;
+    printf("%*s", indent, "");
+    Node n;
+    get_node(addr, &n);
+    printf("node[addr=%d, key=%d, height=%d]\n", addr, n.key, n.meta.height);
+    print_at(n.meta.left_child, indent + 2);
+    print_at(n.meta.right_child, indent + 2);
+  }
+  bool is_balance() const { return is_balance_at(get_root()); }
+  bool is_balance_at(int32_t addr) const
+  {
+    if (addr == 0) return true;
+    int32_t balance = node_balance(addr);
+    avl_tree_node_t meta = node_get_meta(addr);
+    return (balance == -1 || balance == 0 || balance == 1) &&
+           is_balance_at(meta.left_child) && is_balance_at(meta.right_child);
   }
 };
 

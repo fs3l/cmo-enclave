@@ -7,8 +7,8 @@
 
 BOOST_AUTO_TEST_CASE(element_count_test)
 {
-  int32_t len = 1000;
-  int32_t N = 10;
+  int32_t len = 100000;
+  int32_t N = 200;
   int32_t* input = new int32_t[len];
 
   std::set<int32_t> all_elements;
