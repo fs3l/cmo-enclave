@@ -7,11 +7,13 @@
 struct ReadObIterator;
 struct WriteObIterator;
 struct NobArray;
+struct ReadNobArray;
 
 struct CMO {
   std::vector<struct ReadObIterator*> r_obs;
   std::vector<struct WriteObIterator*> w_obs;
   std::vector<struct NobArray*> nobs;
+  std::vector<struct ReadNobArray*> r_nobs;
   // the global shadow memory
   // 0-15 -  meta data
   // 16-63 - ob data r
@@ -38,6 +40,7 @@ struct ReadObIterator* init_read_ob_iterator(CMO_p rt, const int32_t* data,
 struct WriteObIterator* init_write_ob_iterator(CMO_p rt, int32_t* data,
                                                int32_t len);
 struct NobArray* init_nob_array(CMO_p rt, int32_t* data, int32_t len);
+struct ReadNobArray* init_read_nob_array(CMO_p rt, int32_t* data, int32_t len);
 void begin_leaky_sec(CMO_p rt);
 void end_leaky_sec(CMO_p rt);
 
@@ -81,5 +84,18 @@ typedef struct NobArray* NobArray_p;
 
 int32_t nob_read_at(const NobArray_p nob, int32_t addr);
 void nob_write_at(NobArray_p nob, int32_t addr, int32_t data);
+
+struct ReadNobArray {
+  CMO_p rt;
+  int32_t* data;
+  int32_t len;
+  int32_t shadow_mem;
+  uint32_t* g_shadow_mem;
+};
+
+typedef struct ReadNobArray ReadNobArray_t;
+typedef struct ReadNobArray* ReadNobArray_p;
+
+int32_t nob_read_at(const ReadNobArray_p nob, int32_t addr);
 
 #endif

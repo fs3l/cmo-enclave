@@ -11,6 +11,7 @@ void end_tx(CMO_p rt);
 void free_read_ob(ReadObIterator_p ob);
 void free_write_ob(WriteObIterator_p ob);
 void free_nob(NobArray_p nob);
+void free_read_nob(ReadNobArray_p nob);
 int32_t max_read_ob_shadow_mem_size(CMO_p rt, ReadObIterator_p ob);
 int32_t max_write_ob_shadow_mem_size(CMO_p rt, WriteObIterator_p ob);
 
@@ -39,6 +40,7 @@ void free_cmo_runtime(CMO_p rt)
   for (size_t i = 0; i < rt->r_obs.size(); ++i) free_read_ob(rt->r_obs[i]);
   for (size_t i = 0; i < rt->w_obs.size(); ++i) free_write_ob(rt->w_obs[i]);
   for (size_t i = 0; i < rt->nobs.size(); ++i) free_nob(rt->nobs[i]);
+  for (size_t i = 0; i < rt->r_nobs.size(); ++i) free_read_nob(rt->r_nobs[i]);
   delete rt;
 }
 
@@ -87,6 +89,17 @@ NobArray_p init_nob_array(CMO_p rt, int32_t *data, int32_t len)
   return nob;
 }
 
+ReadNobArray_p init_read_nob_array(CMO_p rt, int32_t *data, int32_t len)
+{
+  ReadNobArray_p nob = (ReadNobArray_p)(&rt->g_shadow_mem[rt->meta_pos]);
+  nob->rt = rt;
+  nob->data = data;
+  nob->len = len;
+  rt->r_nobs.push_back(nob);
+  rt->meta_pos += 1024;
+  return nob;
+}
+
 void begin_leaky_sec(CMO_p rt)
 {
   int32_t len_sum = 0;
@@ -117,6 +130,14 @@ void begin_leaky_sec(CMO_p rt)
 
   for (size_t i = 0; i < rt->nobs.size(); ++i) {
     NobArray_p nob = rt->nobs[i];
+    int inob = nob->shadow_mem;
+    for (int i = 0; i < nob->len; i++) {
+      rt->g_shadow_mem[cal_nob(inob + i)] = nob->data[i];
+    }
+  }
+
+  for (size_t i = 0; i < rt->r_nobs.size(); ++i) {
+    ReadNobArray_p nob = rt->r_nobs[i];
     int inob = nob->shadow_mem;
     for (int i = 0; i < nob->len; i++) {
       rt->g_shadow_mem[cal_nob(inob + i)] = nob->data[i];
@@ -230,6 +251,7 @@ void end_tx(CMO_p rt)
 void free_read_ob(ReadObIterator_p ob) { ob->shadow_mem = -1; }
 void free_write_ob(WriteObIterator_p ob) { ob->shadow_mem = -1; }
 void free_nob(NobArray_p nob) { nob->shadow_mem = -1; }
+void free_read_nob(ReadNobArray_p nob) { nob->shadow_mem = -1; }
 int32_t ob_read_next(ReadObIterator_p ob)
 {
   int32_t data = ob->g_shadow_mem[cal_ob(ob->shadow_mem + ob->iter_pos++)];
@@ -260,6 +282,11 @@ int32_t nob_read_at(const NobArray_p nob, int32_t addr)
 void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
 {
   nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr)] = data;
+}
+
+int32_t nob_read_at(const ReadNobArray_p nob, int32_t addr)
+{
+  return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr)];
 }
 
 void cmo_tx_abort(int code) { printf("abort! (code %d)\n", code); }
