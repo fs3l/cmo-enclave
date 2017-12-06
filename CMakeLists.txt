@@ -34,10 +34,8 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 # the following command will glob all cpp source files in src/lib directory
 # and store the results to cmo_src variable.
 glob_cpp_source_file(cmo_src PATH src/lib)
-# extra command required when building assembly files.
-set_source_files_properties(src/lib/cmo_abort_handler.s PROPERTIES COMPILE_FLAGS "-x assembler-with-cpp")
 # build cmo library
-add_library(cmo ${cmo_src} src/lib/cmo_abort_handler.s)
+add_library(cmo ${cmo_src})
 # linked_libraries is a custom variable to keep track of the list of libraries,
 # which will be linked by the test cases.
 list(APPEND linked_libraries cmo)

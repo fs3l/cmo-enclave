@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-uint64_t coda_context[100];
 // private functions
 void begin_tx(CMO_p rt);
 void end_tx(CMO_p rt);
@@ -14,10 +13,16 @@ void free_write_ob(WriteObIterator_p ob);
 void free_nob(NobArray_p nob);
 int32_t max_read_ob_shadow_mem_size(CMO_p rt, ReadObIterator_p ob);
 int32_t max_write_ob_shadow_mem_size(CMO_p rt, WriteObIterator_p ob);
+
+extern "C" {
+void cmo_tx_abort(int code);
+}
+
 int32_t cal_ob(int32_t offset)
 {
   return (offset / 48) * 1024 + offset % 48 + 16;
 }
+
 int32_t cal_ob_rw(int32_t offset)
 {
   return (offset / 48) * 1024 + offset % 48 + 64;
@@ -170,53 +175,36 @@ void begin_tx(CMO_p rt)
   }
 
   __asm__(
-      "mov %%rax,%0\n\t"
-      "mov %%rbx,%1\n\t"
-      "mov %%rcx,%2\n\t"
-      "mov %%rdx,%3\n\t"
-      "mov %%rdi,%4\n\t"
-      "mov %%rsi,%5\n\t"
-      "mov %%r8,%6\n\t"
-      "mov %%r9,%7\n\t"
-      "mov %%r10,%8\n\t"
-      "mov %%r11,%9\n\t"
-      "mov %%r12,%10\n\t"
-      "mov %%r13,%11\n\t"
-      "mov %%r15,%12\n\t"
-      "mov %13,%%r15\n\t"
-      "lea (%%rip),%%r14\n\t"
-      : "=r"(coda_context[0]), "=r"(coda_context[1]), "=r"(coda_context[2]),
-        "=r"(coda_context[3]), "=r"(coda_context[4]), "=r"(coda_context[5]),
-        "=r"(coda_context[6]), "=r"(coda_context[7]), "=r"(coda_context[8]),
-        "=r"(coda_context[9]), "=r"(coda_context[10]), "=r"(coda_context[11]),
-        "=r"(coda_context[12])
-      : "r"(&coda_context[0])
-      : "%r15", "%r14");
-
-  __asm__("mov %0,%%rdi\n\t" : : "r"(rt->g_shadow_mem) : "%rdi");
-  __asm__(
+      "jmp end_abort_handler_%=\n\t"
+      "begin_abort_handler_%=:\n\t"
+      "mov %%eax, %%edi\n\t"
+      "call cmo_tx_abort\n\t"
+      "end_abort_handler_%=:\n\t"
+      "mov %0, %%rdi\n\t"
       "mov $0, %%eax\n\t"
       "mov %%rdi, %%rcx\n\t"
       "loop_ep_%=:\n\t"
-      "cmpl  $7690,%%eax\n\t"
-      "jge    endloop_ep_%=\n\t"
-      "movl   (%%rcx),%%r11d\n\t"
-      "addl   $1, %%eax\n\t"
-      "add    $4, %%rcx\n\t"
-      "jmp    loop_ep_%=\n\t"
+      "cmpl $7690, %%eax\n\t"
+      "jge endloop_ep_%=\n\t"
+      "movl (%%rcx), %%r11d\n\t"
+      "addl $1, %%eax\n\t"
+      "add $4, %%rcx\n\t"
+      "jmp loop_ep_%=\n\t"
       "endloop_ep_%=:\n\t"
-      "xbegin coda_abort_handler\n\t"
+      "xbegin begin_abort_handler_%=\n\t"
       "mov $0, %%eax\n\t"
       "mov %%rdi, %%rcx\n\t"
       "loop_ip_%=:\n\t"
-      "cmpl  $7690,%%eax\n\t"
-      "jge    endloop_ip_%=\n\t"
-      "movl   (%%rcx),%%r11d\n\t"
-      "addl   $1, %%eax\n\t"
-      "add    $4, %%rcx\n\t"
-      "jmp    loop_ip_%=\n\t"
-      "endloop_ip_%=:\n\t" ::
-          :);
+      "cmpl $7690, %%eax\n\t"
+      "jge endloop_ip_%=\n\t"
+      "movl (%%rcx), %%r11d\n\t"
+      "addl $1, %%eax\n\t"
+      "add $4, %%rcx\n\t"
+      "jmp loop_ip_%=\n\t"
+      "endloop_ip_%=:\n\t"
+      : /* no output */
+      : "r"(rt->g_shadow_mem)
+      : "%rdi", "%eax");
 }
 
 void end_tx(CMO_p rt)
@@ -274,6 +262,4 @@ void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
   nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr)] = data;
 }
 
-extern "C" {
-void cmo_tx_abort(int code) { printf("abort!\n"); }
-}
+void cmo_tx_abort(int code) { printf("abort! (code %d)\n", code); }
