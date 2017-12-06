@@ -112,6 +112,16 @@ void begin_leaky_sec(CMO_p rt)
     len_sum += nob->len;
     if (len_sum > 8192) abort();
   }
+
+  for (size_t i = 0; i < rt->r_nobs.size(); ++i) {
+    ReadNobArray_p nob = rt->r_nobs[i];
+    nob->shadow_mem = rt->cur_nob;
+    nob->g_shadow_mem = rt->g_shadow_mem;
+    rt->cur_nob += nob->len;
+    len_sum += nob->len;
+    if (len_sum > 8192) abort();
+  }
+
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem = rt->cur_ob;
