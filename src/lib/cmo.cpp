@@ -91,6 +91,7 @@ NobArray_p init_nob_array(CMO_p rt, int32_t *data, int32_t len)
 
 ReadNobArray_p init_read_nob_array(CMO_p rt, int32_t *data, int32_t len)
 {
+  // TODO
   ReadNobArray_p nob = (ReadNobArray_p)(&rt->g_shadow_mem[rt->meta_pos]);
   nob->rt = rt;
   nob->data = data;
@@ -114,6 +115,7 @@ void begin_leaky_sec(CMO_p rt)
   }
 
   for (size_t i = 0; i < rt->r_nobs.size(); ++i) {
+    // TODO
     ReadNobArray_p nob = rt->r_nobs[i];
     nob->shadow_mem = rt->cur_nob;
     nob->g_shadow_mem = rt->g_shadow_mem;
@@ -147,6 +149,7 @@ void begin_leaky_sec(CMO_p rt)
   }
 
   for (size_t i = 0; i < rt->r_nobs.size(); ++i) {
+    // TODO
     ReadNobArray_p nob = rt->r_nobs[i];
     int inob = nob->shadow_mem;
     for (int i = 0; i < nob->len; i++) {
