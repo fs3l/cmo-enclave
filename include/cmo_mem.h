@@ -37,6 +37,50 @@ void read_element(const NobArray_p nob, int32_t addr, T* element)
   }
 }
 
+// read an element from nob at address addr.
+template <class T>
+void read_element(const ReadNobArray_p nob, int32_t addr, T* element)
+{
+  int32_t i, bytes;
+  unsigned char* dest = (unsigned char*)(element);
+  for (i = 0; i < sizeof(T) / sizeof(int32_t); ++i) {
+    *(int32_t*)dest = nob_read_at(nob, addr + i);
+    dest += sizeof(int32_t);
+    bytes += sizeof(int32_t);
+  }
+  if (bytes < sizeof(T)) {
+    int32_t data = nob_read_at(nob, addr + i);
+    while (bytes < sizeof(T)) {
+      *dest = (unsigned char)(data & 0xff);
+      data >>= 8;
+      dest += sizeof(unsigned char);
+      bytes += sizeof(unsigned char);
+    }
+  }
+}
+
+// read an element from point src.
+template <class T>
+void read_element(const int32_t* src, T* element)
+{
+  int32_t i, bytes;
+  unsigned char* dest = (unsigned char*)(element);
+  for (i = 0; i < sizeof(T) / sizeof(int32_t); ++i) {
+    *(int32_t*)dest = *src++;
+    dest += sizeof(int32_t);
+    bytes += sizeof(int32_t);
+  }
+  if (bytes < sizeof(T)) {
+    int32_t data = *src++;
+    while (bytes < sizeof(T)) {
+      *dest = (unsigned char)(data & 0xff);
+      data >>= 8;
+      dest += sizeof(unsigned char);
+      bytes += sizeof(unsigned char);
+    }
+  }
+}
+
 // write an element to nob at address addr.
 template <class T>
 void write_element(NobArray_p nob, int32_t addr, const T* element)
@@ -57,6 +101,29 @@ void write_element(NobArray_p nob, int32_t addr, const T* element)
       bytes += sizeof(unsigned char);
     }
     nob_write_at(nob, addr + i, data);
+  }
+}
+
+// write an element to point dest.
+template <class T>
+void write_element(int32_t* dest, const T* element)
+{
+  int32_t i, bytes;
+  unsigned char* src = (unsigned char*)(element);
+  for (i = 0; i < sizeof(T) / sizeof(int32_t); ++i) {
+    *dest++ = *(int32_t*)src;
+    src += sizeof(int32_t);
+    bytes += sizeof(int32_t);
+  }
+  if (bytes < sizeof(T)) {
+    int32_t data = 0;
+    src = (unsigned char*)(element) + sizeof(T) - sizeof(unsigned char);
+    while (bytes < sizeof(T)) {
+      data = (data << 8) | (*src & 0xff);
+      src -= sizeof(unsigned char);
+      bytes += sizeof(unsigned char);
+    }
+    *dest++ = data;
   }
 }
 
