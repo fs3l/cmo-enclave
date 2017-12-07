@@ -1,5 +1,7 @@
 #include "./helper.h"
 
+#include "./cmo_helper.h"
+
 #include "cmo.h"
 #include "cmo_mem.h"
 
@@ -41,9 +43,9 @@ BOOST_AUTO_TEST_CASE(mem_test)
 
   begin_leaky_sec(rt);
   read_element(nob, 0, &c);
-  BOOST_CHECK(a == c);
+  CMO_BOOST_CHECK(rt, a == c);
   read_element(r_nob, 0, &d);
-  BOOST_CHECK(a == d);
+  CMO_BOOST_CHECK(rt, a == d);
   a = random_element();
   write_element(nob, 0, &a);
   end_leaky_sec(rt);

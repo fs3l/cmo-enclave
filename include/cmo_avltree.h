@@ -82,14 +82,11 @@ public:
   }
 
   int32_t size() const { return nob_read_at(nob, 1); }
-
   int32_t begin_address() const { return mem.begin_address(); }
   int32_t next_address(int32_t addr) const { return mem.next_address(addr); }
-
 private:
   int32_t get_root() const { return nob_read_at(nob, 0); }
   void set_root(int32_t new_root) { nob_write_at(nob, 0, new_root); }
-
   avl_tree_node_t node_get_meta(int32_t addr) const
   {
     avl_tree_node_t meta;
@@ -321,7 +318,6 @@ public:
   }
   int32_t begin_address() const { return tree.begin_address(); }
   int32_t next_address(int32_t addr) const { return tree.next_address(addr); }
-
 private:
   AVLTree<T, struct avl_set_node<T>> tree;
 };
@@ -371,7 +367,6 @@ public:
   }
   int32_t begin_address() const { return tree.begin_address(); }
   int32_t next_address(int32_t addr) const { return tree.next_address(addr); }
-
 private:
   AVLTree<K, struct avl_map_node<K, V>> tree;
 };

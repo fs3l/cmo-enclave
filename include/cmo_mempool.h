@@ -141,7 +141,6 @@ public:
   }
   // next address
   int32_t next_address(int32_t addr) const { return get_block_next_addr(addr); }
-
 private:
   int32_t get_meta_begin_addr(int32_t meta_addr) const
   {

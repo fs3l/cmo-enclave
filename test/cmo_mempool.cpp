@@ -1,5 +1,7 @@
 #include "./helper.h"
 
+#include "./cmo_helper.h"
+
 #include "cmo.h"
 #include "cmo_mempool.h"
 
@@ -12,8 +14,8 @@ BOOST_AUTO_TEST_CASE(mempool_test)
   MemoryPool<int32_t> pool(rt, LEN);
 
   begin_leaky_sec(rt);
-  BOOST_CHECK(pool.empty());
-  BOOST_CHECK(!pool.full());
+  CMO_BOOST_CHECK(rt, pool.empty());
+  CMO_BOOST_CHECK(rt, !pool.full());
 
   int32_t addrs[LEN] = {-1};
 
@@ -23,13 +25,13 @@ BOOST_AUTO_TEST_CASE(mempool_test)
     addrs[i] = addr;
   }
 
-  BOOST_CHECK(!pool.empty());
-  BOOST_CHECK(pool.full());
+  CMO_BOOST_CHECK(rt, !pool.empty());
+  CMO_BOOST_CHECK(rt, pool.full());
 
   for (int32_t i = 0; i < LEN; ++i) {
     int32_t data;
     pool.read_block(addrs[i], &data);
-    BOOST_CHECK(data == i);
+    CMO_BOOST_CHECK(rt, data == i);
   }
 
   for (int32_t i = 0; i < LEN; ++i) {
@@ -43,14 +45,14 @@ BOOST_AUTO_TEST_CASE(mempool_test)
     if (addrs[i] != -1) {
       int32_t data;
       pool.read_block(addrs[i], &data);
-      BOOST_CHECK(data == i);
+      CMO_BOOST_CHECK(rt, data == i);
       pool.free_block(addrs[i]);
       addrs[i] = -1;
     }
   }
 
-  BOOST_CHECK(pool.empty());
-  BOOST_CHECK(!pool.full());
+  CMO_BOOST_CHECK(rt, pool.empty());
+  CMO_BOOST_CHECK(rt, !pool.full());
 
   end_leaky_sec(rt);
 

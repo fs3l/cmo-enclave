@@ -1,5 +1,7 @@
 #include "./helper.h"
 
+#include "./cmo_helper.h"
+
 #include "cmo.h"
 #include "cmo_avltree.h"
 
@@ -12,20 +14,20 @@ BOOST_AUTO_TEST_CASE(avl_set_test)
   AVLSet<int32_t> s(rt, N);
 
   begin_leaky_sec(rt);
-  BOOST_CHECK(!s.find(1));
+  CMO_BOOST_CHECK(rt, !s.find(1));
   for (int32_t i = 0; i < N; ++i) s.insert(i);
-  for (int32_t i = 0; i < N; ++i) BOOST_CHECK(s.find(i));
+  for (int32_t i = 0; i < N; ++i) CMO_BOOST_CHECK(rt, s.find(i));
   for (int32_t i = 0; i < N; ++i) {
     if (i % 2 == 0) s.remove(i);
   }
   for (int32_t i = 0; i < N; ++i) {
     if (i % 2 == 0)
-      BOOST_CHECK(!s.find(i));
+      CMO_BOOST_CHECK(rt, !s.find(i));
     else
-      BOOST_CHECK(s.find(i));
+      CMO_BOOST_CHECK(rt, s.find(i));
   }
   for (int32_t i = 0; i < N; ++i) s.remove(i);
-  for (int32_t i = 0; i < N; ++i) BOOST_CHECK(!s.find(i));
+  for (int32_t i = 0; i < N; ++i) CMO_BOOST_CHECK(rt, !s.find(i));
   end_leaky_sec(rt);
   free_cmo_runtime(rt);
 }
@@ -41,9 +43,9 @@ BOOST_AUTO_TEST_CASE(avl_map_test)
   for (int32_t i = 0; i < N; ++i) m.insert(i, i * 10);
   for (int32_t i = 0; i < N; ++i) {
     addr = m.find(i);
-    BOOST_CHECK(addr != -1);
+    CMO_BOOST_CHECK(rt, addr != -1);
     m.get_value(addr, &value);
-    BOOST_CHECK(value == i * 10);
+    CMO_BOOST_CHECK(rt, value == i * 10);
   }
   for (int32_t i = 0; i < N; ++i) {
     if (i % 2 == 0)
@@ -55,16 +57,16 @@ BOOST_AUTO_TEST_CASE(avl_map_test)
   }
   for (int32_t i = 0; i < N; ++i) {
     if (i % 2 == 0) {
-      BOOST_CHECK(m.find(i) == 0);
+      CMO_BOOST_CHECK(rt, m.find(i) == 0);
     } else {
       addr = m.find(i);
-      BOOST_CHECK(addr != 0);
+      CMO_BOOST_CHECK(rt, addr != 0);
       m.get_value(addr, &value);
-      BOOST_CHECK(value == i * 100);
+      CMO_BOOST_CHECK(rt, value == i * 100);
     }
   }
   for (int32_t i = 0; i < N; ++i) m.remove(i);
-  for (int32_t i = 0; i < N; ++i) BOOST_CHECK(m.find(i) == 0);
+  for (int32_t i = 0; i < N; ++i) CMO_BOOST_CHECK(rt, m.find(i) == 0);
   end_leaky_sec(rt);
 
   free_cmo_runtime(rt);
