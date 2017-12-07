@@ -10,7 +10,8 @@ void CMO_BOOST_CHECK(CMO_p rt, bool cond)
     end_leaky_sec(rt);
     BOOST_CHECK(cond);
     begin_leaky_sec(rt);
-  }
+  } else
+    BOOST_CHECK(cond);
 }
 
 #endif
