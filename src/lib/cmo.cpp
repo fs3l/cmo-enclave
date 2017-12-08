@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#define OLD_ALLOC 0
 // private functions
 void begin_tx(CMO_p rt);
 void end_tx(CMO_p rt);
@@ -18,7 +18,7 @@ int32_t max_write_ob_shadow_mem_size(CMO_p rt, WriteObIterator_p ob);
 extern "C" {
 void cmo_tx_abort(int code);
 }
-
+#if OLD_ALLOC
 int32_t cal_ob(int32_t offset)
 {
   return (offset / 48) * 1024 + offset % 48 + 16;
@@ -33,6 +33,22 @@ int32_t cal_nob(int32_t offset)
 {
   return (offset / 640) * 1024 + offset % 640 + 112;
 }
+#else
+int32_t cal_ob(int32_t offset)
+{
+  return offset+128;
+}
+
+int32_t cal_ob_rw(int32_t offset)
+{
+  return offset+512;
+}
+
+int32_t cal_nob(int32_t offset)
+{
+  return offset+1152;
+}
+#endif
 
 CMO_p init_cmo_runtime() { return new CMO_t; }
 void free_cmo_runtime(CMO_p rt)
@@ -62,7 +78,11 @@ ReadObIterator_p init_read_ob_iterator(CMO_p rt, const int32_t *data,
   ob->len = len;
   ob->shadow_mem_len = ob->shadow_mem_pos = ob->iter_pos = 0;
   rt->r_obs.push_back(ob);
+#if OLD_ALLOC
   rt->meta_pos += 1024;
+#else 
+  rt->meta_pos += 16;
+#endif
   return ob;
 }
 
@@ -74,7 +94,11 @@ WriteObIterator_p init_write_ob_iterator(CMO_p rt, int32_t *data, int32_t len)
   ob->len = len;
   ob->shadow_mem_len = ob->shadow_mem_pos = ob->iter_pos = 0;
   rt->w_obs.push_back(ob);
+#if OLD_ALLOC
   rt->meta_pos += 1024;
+#else 
+  rt->meta_pos += 16;
+#endif
   return ob;
 }
 
@@ -85,7 +109,11 @@ NobArray_p init_nob_array(CMO_p rt, int32_t *data, int32_t len)
   nob->data = data;
   nob->len = len;
   rt->nobs.push_back(nob);
+#if OLD_ALLOC
   rt->meta_pos += 1024;
+#else 
+  rt->meta_pos += 16;
+#endif
   return nob;
 }
 
@@ -97,7 +125,11 @@ ReadNobArray_p init_read_nob_array(CMO_p rt, int32_t *data, int32_t len)
   nob->data = data;
   nob->len = len;
   rt->r_nobs.push_back(nob);
+#if OLD_ALLOC
   rt->meta_pos += 1024;
+#else 
+  rt->meta_pos += 16;
+#endif
   return nob;
 }
 
@@ -212,7 +244,25 @@ void begin_tx(CMO_p rt)
       "jmp end_abort_handler_%=\n\t"
       "begin_abort_handler_%=:\n\t"
       "mov %%eax, %%edi\n\t"
+      /*"push %%rax\n\t"
+      "push %%rcx\n\t"
+      "push %%rdx\n\t"
+      "push %%rsi\n\t"
+      "push %%rdi\n\t"
+      "push %%r8\n\t"
+      "push %%r9\n\t"
+      "push %%r10\n\t"
+      "push %%r11\n\t"
       "call cmo_tx_abort\n\t"
+      "pop %%r11\n\t"
+      "pop %%r10\n\t"
+      "pop %%r9\n\t"
+      "pop %%r8\n\t"
+      "pop %%rdi\n\t"
+      "pop %%rsi\n\t"
+      "pop %%rdx\n\t"
+      "pop %%rcx\n\t"
+      "pop %%rax\n\t"*/
       "end_abort_handler_%=:\n\t"
       "mov %0, %%rdi\n\t"
       "mov $0, %%eax\n\t"
