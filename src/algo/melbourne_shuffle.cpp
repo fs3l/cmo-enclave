@@ -52,7 +52,12 @@ static void _melbourne_shuffle_distribute(const int32_t* arr_in,
         ob_write_next(write_ob, e.value);
         ob_write_next(write_ob, e.perm);
       }
+
+      if (!q.empty(bucket_idx)) {
+        cmo_abort(rt, "melbourne_shuffle: queue is not empty");
+      }
     }
+
     end_leaky_sec(rt);
 
     write_output_idx = 0;
