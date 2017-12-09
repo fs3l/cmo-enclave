@@ -14,20 +14,23 @@ static void _melbourne_shuffle_distribute(const int32_t* arr_in,
   const int32_t write_output_len = 2 * num_of_bucket * p_log_len;
   int32_t* write_output = new int32_t[write_output_len];
 
-  CMO_p rt = init_cmo_runtime();
-
-  ReadObIterator_p arr_in_ob = init_read_ob_iterator(rt, arr_in, len);
-  ReadObIterator_p perm_in_ob = init_read_ob_iterator(rt, perm_in, len);
-  WriteObIterator_p write_ob =
-      init_write_ob_iterator(rt, write_output, write_output_len);
-  MultiQueue<shuffle_element_t> q(rt, num_of_bucket, num_of_bucket);
-
   int32_t i, read_idx, write_idx, bucket_idx, write_output_idx;
   shuffle_element_t e;
 
   read_idx = 0;
   write_idx = 0;
   while (read_idx < len) {
+    CMO_p rt = init_cmo_runtime();
+
+    const int32_t read_len = min(len - read_idx, num_of_bucket);
+    ReadObIterator_p arr_in_ob =
+        init_read_ob_iterator(rt, arr_in + read_idx, read_len);
+    ReadObIterator_p perm_in_ob =
+        init_read_ob_iterator(rt, perm_in + read_idx, read_len);
+    WriteObIterator_p write_ob =
+        init_write_ob_iterator(rt, write_output, write_output_len);
+    MultiQueue<shuffle_element_t> q(rt, num_of_bucket, num_of_bucket);
+
     begin_leaky_sec(rt);
     for (i = 0; i < num_of_bucket && read_idx < len; ++i) {
       e.value = ob_read_next(arr_in_ob);
@@ -63,10 +66,9 @@ static void _melbourne_shuffle_distribute(const int32_t* arr_in,
     }
 
     write_idx += p_log_len * 2;
-    reset_write_ob(write_ob);
+    free_cmo_runtime(rt);
   }
 
-  free_cmo_runtime(rt);
   delete[] write_output;
 }
 
