@@ -7,7 +7,7 @@
 
 #include <boost/test/included/unit_test.hpp>
 
-extern sgx_enclave_id_t global_eid;
+sgx_enclave_id_t global_eid = 0;
 
 struct GlobalFixture {
   GlobalFixture()

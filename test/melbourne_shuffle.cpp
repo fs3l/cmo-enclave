@@ -4,8 +4,6 @@
 #include "./sgx_helper.h"
 
 #include "algo_u.h"
-
-sgx_enclave_id_t global_eid = 0;
 #else
 #include "algo.h"
 #endif
