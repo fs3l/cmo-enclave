@@ -35,20 +35,9 @@ int32_t cal_nob(int32_t offset)
   return (offset / 640) * 1024 + offset % 640 + 112;
 }
 #else
-int32_t cal_ob(int32_t offset)
-{
-  return offset+128;
-}
-
-int32_t cal_ob_rw(int32_t offset)
-{
-  return offset+512;
-}
-
-int32_t cal_nob(int32_t offset)
-{
-  return offset+1152;
-}
+int32_t cal_ob(int32_t offset) { return offset + 128; }
+int32_t cal_ob_rw(int32_t offset) { return offset + 512; }
+int32_t cal_nob(int32_t offset) { return offset + 1152; }
 #endif
 
 CMO_p init_cmo_runtime() { return new CMO_t; }

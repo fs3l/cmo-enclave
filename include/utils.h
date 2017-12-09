@@ -1,8 +1,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <cmath>
 #include <stdint.h>
+#include <cmath>
 
 template <class T>
 inline T min(const T& a, const T& b)

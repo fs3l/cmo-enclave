@@ -59,6 +59,7 @@ def FlagsForFile(filename, **kwargs):
             "-x",
             "c++",
             "-Iinclude/",
+            "-Isgx/include/",
             "-I/opt/intel/sgxsdk/include/"
             ]
     flags += SystemIncludePathasFlags()

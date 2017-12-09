@@ -28,13 +28,13 @@ BOOST_AUTO_TEST_CASE(readonly_set_test)
   end_leaky_sec(rt);
   free_cmo_runtime(rt);
 
-  delete [] data;
+  delete[] data;
 }
 
 BOOST_AUTO_TEST_CASE(readonly_map_test)
 {
-  int32_t *keys= new int32_t[N];
-  int32_t *values= new int32_t[N];
+  int32_t *keys = new int32_t[N];
+  int32_t *values = new int32_t[N];
   for (int32_t i = 0; i < N; ++i) {
     keys[i] = i * 100;
     values[i] = i;
@@ -74,7 +74,6 @@ BOOST_AUTO_TEST_CASE(readonly_map_test)
   end_leaky_sec(rt);
   free_cmo_runtime(rt);
 
-  delete [] keys;
-  delete [] values;
+  delete[] keys;
+  delete[] values;
 }
-

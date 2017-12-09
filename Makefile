@@ -19,7 +19,7 @@ clean:
 
 clang-format:
 	@find . -type f \( -name "*.cpp" -or -name "*.h" -or -name "*.hpp" \) \
-		-not -path "./build/*" -not -path "./src/vendor/*" \
+		-not -path "./build/*" \
 		-print -exec clang-format -i {} \;
 
 .PHONY: build clang-format clean cmake test test-verbose
