@@ -12,7 +12,7 @@ extern sgx_enclave_id_t global_eid;
 struct GlobalFixture {
   GlobalFixture()
   {
-    if (initialize_enclave("../lib/libalgo_enclave.so", "enclave.token",
+    if (initialize_enclave("../../lib/libalgo_enclave.so", "enclave.token",
                            &global_eid) < 0) {
       BOOST_FAIL("fail to initialize enclave");
     }
