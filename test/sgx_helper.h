@@ -1,4 +1,4 @@
-#ifdef SGX_HELPER_H
+#ifndef SGX_HELPER_H
 #define SGX_HELPER_H
 
 #ifdef SGX_APP
@@ -20,7 +20,7 @@ struct GlobalFixture {
   ~GlobalFixture() { sgx_destroy_enclave(global_eid); }
 };
 
-BOOST_GLOBAL_FIXTURE(struct GlobalFixture);
+BOOST_GLOBAL_FIXTURE(GlobalFixture);
 
 #endif
 
