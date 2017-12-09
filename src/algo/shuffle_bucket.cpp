@@ -1,6 +1,5 @@
 #include "./shuffle_bucket.h"
 
-#include <stdio.h>
 #include "utils.h"
 
 shuffle_bucket_p init_empty_shuffle_bucket(int32_t len, int32_t begin_idx,
@@ -48,12 +47,12 @@ void randomize_shuffle_bucket(shuffle_bucket_p bucket)
 
 void print_shuffle_bucket(const shuffle_bucket_p bucket, bool skip_invalid_perm)
 {
-  // TODO: replace printf with ecall.
-  printf("bucket[len=%d, begin_idx=%d, end_idx=%d]\n", bucket->len,
-         bucket->begin_idx, bucket->end_idx);
+  print_message("bucket[len=%d, begin_idx=%d, end_idx=%d]\n", bucket->len,
+                bucket->begin_idx, bucket->end_idx);
   for (int32_t i = 0; i < bucket->len; ++i) {
     if (skip_invalid_perm && bucket->data[2 * i + 1] == -1) continue;
-    printf("<v=%d, p=%d>\n", bucket->data[2 * i], bucket->data[2 * i + 1]);
+    print_message("<v=%d, p=%d>\n", bucket->data[2 * i],
+                  bucket->data[2 * i + 1]);
   }
 }
 

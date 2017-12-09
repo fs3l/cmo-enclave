@@ -4,9 +4,6 @@
 #include "cmo.h"
 #include "cmo_array.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-
 template <class T>
 class ROSet
 {
@@ -16,8 +13,7 @@ public:
     for (int32_t i = 0; i < size; ++i) {
       data.write(i, &_data[i]);
       if (i > 0 && _data[i] < _data[i - 1]) {
-        printf("ROSet: invalid data");
-        abort();
+        abort_message("ROSet: invalid data\n");
       }
     }
   }
@@ -68,8 +64,7 @@ public:
       e.value = values[i];
       data.write(i, &e);
       if (i > 0 && keys[i] < keys[i - 1]) {
-        printf("ROMap: invalid data");
-        abort();
+        abort_message("ROMap: invalid data\n");
       }
     }
   }

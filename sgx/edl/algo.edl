@@ -1,0 +1,42 @@
+enclave {
+
+  include "algo.h"
+
+    from "untrust.edl" import *;
+
+  trusted {
+    public void ecall_naive_shuffle(
+        [in, size=len] const int32_t* arr_in,
+        [in, size=len] const int32_t* perm_in,
+        [out, size=len] int32_t* arr_out,
+        int32_t len);
+
+    public void ecall_melbourne_shuffle(
+        [in, size=len] const int32_t* arr_in,
+        [in, size=len] const int32_t* perm_in,
+        [out, size=len] int32_t* arr_out,
+        int32_t len,
+        int32_t blow_up_factor);
+
+    public void ecall_cache_shuffle(
+        [in, size=len] const int32_t* arr_in,
+        [in, size=len] const int32_t* perm_in,
+        [out, size=len] int32_t* arr_out,
+        int32_t len,
+        double epsilon,
+        int32_t mem_cap);
+
+    public void ecall_merge_sort(
+        [in, size=len] const int32_t* arr_in,
+        [in, size=len] int32_t* arr_out,
+        int32_t len,
+        int32_t blow_up_factor);
+
+    public void ecall_element_count(
+        [in, size=len] const int32_t* arr_in,
+        int32_t len,
+        int32_t uniq_elements,
+        [out, size=uniq_elements] struct count_result* result
+        );
+  };
+};

@@ -1,7 +1,14 @@
 #include "./helper.h"
 
+#ifdef SGX_APP
+#include "./sgx_helper.h"
+
+#include "algo_u.h"
+
+sgx_enclave_id_t global_eid = 0;
+#else
 #include "algo.h"
-#include "cmo.h"
+#endif
 
 #include <set>
 
@@ -20,7 +27,12 @@ BOOST_AUTO_TEST_CASE(element_count_test)
   N = all_elements.size();
 
   count_result_t* output = new count_result_t[N];
+
+#ifdef SGX_APP
+  ecall_element_count(global_eid, input, len, N, output);
+#else
   element_count(input, len, N, output);
+#endif
   for (int32_t i = 0; i < N; ++i) {
     count_result_t r = output[i];
     int32_t real = 0;

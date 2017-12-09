@@ -8,8 +8,6 @@
 #include "cmo_mempool.h"
 #include "utils.h"
 
-#include <stdio.h>
-
 struct avl_tree_node {
   int16_t left_child;
   int16_t right_child;
@@ -269,17 +267,18 @@ private:
 
   void print() const
   {
-    printf("--------\n");
+    print_message("--------\n");
     print_at(get_root(), 0);
-    if (!is_balance()) printf("unbalance!!\n");
+    if (!is_balance()) print_message("unbalance!!\n");
   }
   void print_at(int32_t addr, int32_t indent) const
   {
     if (addr == 0) return;
-    printf("%*s", indent, "");
+    print_message("%*s", indent, "");
     Node n;
     get_node(addr, &n);
-    printf("node[addr=%d, key=%d, height=%d]\n", addr, n.key, n.meta.height);
+    print_message("node[addr=%d, key=%d, height=%d]\n", addr, n.key,
+                  n.meta.height);
     print_at(n.meta.left_child, indent + 2);
     print_at(n.meta.right_child, indent + 2);
   }

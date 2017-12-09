@@ -1,10 +1,11 @@
 #include "cmo.h"
 #include "utils.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
+
 #define OLD_ALLOC 0
+
 // private functions
 void begin_tx(CMO_p rt);
 void end_tx(CMO_p rt);
@@ -64,9 +65,7 @@ void cmo_abort(CMO_p rt, const char *abort_msg)
 {
   // TODO: check if it is in leaky sec
   end_leaky_sec(rt);
-  // TODO: replace printf and abort with ecalls
-  printf("%s\n", abort_msg);
-  abort();
+  abort_message("%s\n", abort_msg);
 }
 
 ReadObIterator_p init_read_ob_iterator(CMO_p rt, const int32_t *data,
@@ -80,7 +79,7 @@ ReadObIterator_p init_read_ob_iterator(CMO_p rt, const int32_t *data,
   rt->r_obs.push_back(ob);
 #if OLD_ALLOC
   rt->meta_pos += 1024;
-#else 
+#else
   rt->meta_pos += 16;
 #endif
   return ob;
@@ -96,7 +95,7 @@ WriteObIterator_p init_write_ob_iterator(CMO_p rt, int32_t *data, int32_t len)
   rt->w_obs.push_back(ob);
 #if OLD_ALLOC
   rt->meta_pos += 1024;
-#else 
+#else
   rt->meta_pos += 16;
 #endif
   return ob;
@@ -111,7 +110,7 @@ NobArray_p init_nob_array(CMO_p rt, int32_t *data, int32_t len)
   rt->nobs.push_back(nob);
 #if OLD_ALLOC
   rt->meta_pos += 1024;
-#else 
+#else
   rt->meta_pos += 16;
 #endif
   return nob;
@@ -127,7 +126,7 @@ ReadNobArray_p init_read_nob_array(CMO_p rt, int32_t *data, int32_t len)
   rt->r_nobs.push_back(nob);
 #if OLD_ALLOC
   rt->meta_pos += 1024;
-#else 
+#else
   rt->meta_pos += 16;
 #endif
   return nob;
@@ -143,7 +142,7 @@ void begin_leaky_sec(CMO_p rt)
     rt->cur_nob += nob->len;
     // TODO cache size dynamically check
     len_sum += nob->len;
-    if (len_sum > 8192) abort();
+    if (len_sum > 8192) abort_message("begin_leaky_sec: nob size\n");
   }
 
   for (size_t i = 0; i < rt->r_nobs.size(); ++i) {
@@ -153,7 +152,7 @@ void begin_leaky_sec(CMO_p rt)
     nob->g_shadow_mem = rt->g_shadow_mem;
     rt->cur_nob += nob->len;
     len_sum += nob->len;
-    if (len_sum > 8192) abort();
+    if (len_sum > 8192) abort_message("begin_leaky_sec: r_nob size\n");
   }
 
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
@@ -352,4 +351,4 @@ int32_t nob_read_at(const ReadNobArray_p nob, int32_t addr)
   return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr)];
 }
 
-void cmo_tx_abort(int code) { printf("abort! (code %d)\n", code); }
+void cmo_tx_abort(int code) { print_message("abort! (code %d)\n", code); }
