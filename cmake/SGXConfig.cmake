@@ -29,9 +29,6 @@ else()
   message(FATAL_ERROR "Unsupported SGX_ARCH: ${SGX_ARCH}")
 endif()
 
-include_directories("${SGX_INCLUDE_DIR}")
-link_directories("${SGX_LIBRARY_PATH}")
-
 if (SGX_MODE STREQUAL HW)
   set(SGX_URTS_LIB sgx_urts)
   set(SGX_TRTS_LIB sgx_trts)
@@ -64,10 +61,10 @@ endif()
 
 set(SGX_APP_CFLAGS ${SGX_COMMON_CFLAGS} ${SGX_APP_CFLAGS} -fPIC -Wno-attributes -I${SGX_INCLUDE_DIR} -DSGX_APP)
 set(SGX_APP_CPPFLAGS ${SGX_APP_CFLAGS} -std=c++11)
-set(SGX_APP_LDFLAGS ${SGX_COMMON_CFLAGS} -l${SGX_URTS_LIB} -lpthread)
+set(SGX_APP_LDFLAGS ${SGX_COMMON_CFLAGS} -L${SGX_LIBRARY_PATH} -l${SGX_URTS_LIB} -lpthread)
 set(SGX_ENCLAVE_CFLAGS ${SGX_COMMON_CFLAGS} -nostdinc -fvisibility=hidden -fpie -fstack-protector -I${SGX_INCLUDE_DIR} -I${SGX_INCLUDE_DIR}/tlibc -I${SGX_INCLUDE_DIR}/stlport -DSGX_ENCLAVE)
 set(SGX_ENCLAVE_CPPFLAGS ${SGX_ENCLAVE_CFLAGS} -nostdinc++ -std=c++11)
-set(SGX_ENCLAVE_LDFLAGS ${SGX_COMMON_CFLAGS} -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles -Wl,--whole-archive -l${SGX_TRTS_LIB} -Wl,--no-whole-archive -Wl,--start-group -lsgx_tstdc -lsgx_tstdcxx -l${SGX_TSVC_LIB} -l${SGX_CRYP_LIB} -Wl,--end-group -Wl,-Bstatic -Wl,-Bsymbolic -Wl,--no-undefined -Wl,-pie,-eenclave_entry -Wl,--export-dynamic -Wl,--defsym,__ImageBase=0)
+set(SGX_ENCLAVE_LDFLAGS ${SGX_COMMON_CFLAGS} -Wl,--no-undefined -nostdlib -nodefaultlibs -nostartfiles -L${SGX_LIBRARY_PATH} -Wl,--whole-archive -l${SGX_TRTS_LIB} -Wl,--no-whole-archive -Wl,--start-group -lsgx_tstdc -lsgx_tstdcxx -l${SGX_TSVC_LIB} -l${SGX_CRYP_LIB} -Wl,--end-group -Wl,-Bstatic -Wl,-Bsymbolic -Wl,--no-undefined -Wl,-pie,-eenclave_entry -Wl,--export-dynamic -Wl,--defsym,__ImageBase=0)
 
 message(STATUS "SGX_SDK: ${SGX_SDK}")
 message(STATUS "SGX_ARCH: ${SGX_ARCH}")
