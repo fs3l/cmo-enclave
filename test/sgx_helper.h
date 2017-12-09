@@ -14,7 +14,7 @@ struct GlobalFixture {
   {
     if (initialize_enclave("../lib/libalgo_enclave.so", "enclave.token",
                            &global_eid) < 0) {
-      BOOST_ERROR("fail to initialize enclave");
+      BOOST_FAIL("fail to initialize enclave");
     }
   }
   ~GlobalFixture() { sgx_destroy_enclave(global_eid); }
