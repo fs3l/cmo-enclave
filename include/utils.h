@@ -1,7 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <math.h>
+#include <cmath>
 #include <stdint.h>
 
 template <class T>
@@ -38,5 +38,9 @@ void fisher_yates_shuffle(T* arr, int32_t len)
 int32_t* gen_sequence(int32_t len, int32_t start_value = 0);
 
 int32_t* gen_random_sequence(int32_t len, int32_t start_value = 0);
+
+void abort_message(const char* fmt, ...);
+
+void print_message(const char* fmt, ...);
 
 #endif

@@ -1,0 +1,6 @@
+enclave {
+  untrusted {
+    void ocall_abort();
+    void ocall_print([in, string] const char* message);
+  };
+};
