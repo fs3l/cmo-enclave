@@ -1,5 +1,5 @@
 CMAKE_BUILD_TYPE := RelWithDebInfo
-CMAKE_BUILD_OPTIONS :=
+CMAKE_BUILD_OPTIONS := -DENABLE_SGX=ON
 
 build: cmake
 	cd build && $(MAKE)

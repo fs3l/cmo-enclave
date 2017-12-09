@@ -17,7 +17,7 @@ foreach(test_src ${test_srcs})
     )
 
   # add sgx executable
-  if(NOT ${test_name} MATCHES "cmo_.*")
+  if(ENABLE_SGX AND NOT ${test_name} MATCHES "cmo_.*")
     add_sgx_executable(${test_name}_enclave
       EDL_FILE ${PROJECT_SOURCE_DIR}/sgx/edl/algo.edl
       SOURCES ${test_src}

@@ -13,10 +13,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_TEST_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/test)
 
-# sgx config
-set(SGX_SDK /opt/intel/sgxsdk)
-set(SGX_MODE HW CACHE STRING "SGX mode: SIM or HW")
-set(SGX_BUILD DEBUG CACHE STRING "SGX build: DEBUG, PRERELEASE OR RELEASE")
+# whether to enable sgx
+option(ENABLE_SGX "Enable SGX" OFF)
 
 # this is the directory for our custom CMake modules.
 # list(APPEND x y) command is used to append value y to the list x.
@@ -24,7 +22,14 @@ set(SGX_BUILD DEBUG CACHE STRING "SGX build: DEBUG, PRERELEASE OR RELEASE")
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 # include() command is used to load custom modules.
 include(FileUtils)
-include(SGXConfig)
+
+if(ENABLE_SGX)
+  # sgx config
+  set(SGX_SDK /opt/intel/sgxsdk)
+  set(SGX_MODE HW CACHE STRING "SGX mode: SIM or HW")
+  set(SGX_BUILD DEBUG CACHE STRING "SGX build: DEBUG, PRERELEASE OR RELEASE")
+  include(SGXConfig)
+endif()
 
 # enable c++11.
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -48,13 +53,15 @@ add_library(algo ${algo_src})
 # the algo library should be linked with cmo library
 target_link_libraries(algo cmo)
 
-# build enclave version of algo library
-add_sgx_enclave_library(algo_enclave
-  EDL_FILE sgx/edl/algo.edl
-  LDS_FILE sgx/lds/algo.lds
-  PRIVATE_KEY sgx/private.pem
-  CONFIG_FILE sgx/config.xml
-  SOURCES ${algo_src} ${cmo_src} sgx/src/enclave/algo.cpp)
+if(ENABLE_SGX)
+  # build enclave version of algo library
+  add_sgx_enclave_library(algo_enclave
+    EDL_FILE sgx/edl/algo.edl
+    LDS_FILE sgx/lds/algo.lds
+    PRIVATE_KEY sgx/private.pem
+    CONFIG_FILE sgx/config.xml
+    SOURCES ${algo_src} ${cmo_src} sgx/src/enclave/algo.cpp)
+endif()
 
 # add unit test
 enable_testing()
