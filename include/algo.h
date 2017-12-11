@@ -29,6 +29,9 @@ typedef struct count_result count_result_t;
 void element_count(const int32_t* arr_in, int32_t len, int32_t uniq_elememts,
                    count_result_t* result);
 
+void kmeans(const int32_t* x_in, const int32_t* y_in, int32_t len, int32_t k,
+            int32_t* result);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

@@ -36,7 +36,13 @@ enclave {
         [in, count=len] const int32_t* arr_in,
         int32_t len,
         int32_t uniq_elements,
-        [out, count=uniq_elements] struct count_result* result
-        );
+        [out, count=uniq_elements] struct count_result* result);
+
+    public void ecall_kmeans(
+        [in, count=len] const int32_t* x_in,
+        [in, count=len] const int32_t* y_in,
+        int32_t len,
+        int32_t k,
+        [out, count=len] int32_t* result);
   };
 };
