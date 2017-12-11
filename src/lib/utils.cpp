@@ -62,7 +62,7 @@ void abort_message(const char* fmt, ...)
 void print_message(const char* fmt, ...)
 {
 #ifdef SGX_ENCLAVE
-  char buffer[512];
+  char buffer[512] = {'\0'};
   va_list args;
   va_start(args, fmt);
   vsnprintf(buffer, 512, fmt, args);
@@ -71,7 +71,7 @@ void print_message(const char* fmt, ...)
 #else
   va_list args;
   va_start(args, fmt);
-  printf(fmt, args);
+  vprintf(fmt, args);
   va_end(args);
 #endif
 }
