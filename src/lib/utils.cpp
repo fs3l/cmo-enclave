@@ -20,6 +20,17 @@ int32_t random_int32()
 #endif
 }
 
+void cmove_int32(bool cond, int32_t* src, int32_t* dest)
+{
+  __asm__(
+      "mov %rdi, %rax\n\t"
+      "mov (%rsi), %rbx\n\t"
+      "mov (%rdx), %rcx\n\t"
+      "test %rax, %rax\n\t"
+      "cmovnz %rbx, %rcx\n\t"
+      "mov %rcx, (%rdx)\n\t");
+}
+
 int32_t* gen_sequence(int32_t len, int32_t start_value)
 {
   int32_t* result = new int32_t[len];
