@@ -45,6 +45,20 @@ public:
     int32_t addr = idx * element_block_size + 2;
     write_element<T>(nob, addr, element);
   }
+  // read element at index idx (leaky)
+  void read_leaky(int32_t idx, T* element) const
+  {
+    const int32_t element_block_size = calc_element_block_size<T>();
+    int32_t addr = idx * element_block_size + 2;
+    read_element<T>(data + addr, element);
+  }
+  // write element at index idx (leaky)
+  void write_leaky(int32_t idx, const T* element)
+  {
+    const int32_t element_block_size = calc_element_block_size<T>();
+    int32_t addr = idx * element_block_size + 2;
+    write_element<T>(data + addr, element);
+  }
 
   int32_t* data;
   NobArray_p nob;
@@ -76,8 +90,15 @@ public:
     int32_t addr = idx * element_block_size + 2;
     read_element<T>(nob, addr, element);
   }
-  // write element at index idx (to initialize array data)
-  void write(int32_t idx, const T* element)
+  // read element at index idx (leaky)
+  void read_leaky(int32_t idx, T* element) const
+  {
+    const int32_t element_block_size = calc_element_block_size<T>();
+    int32_t addr = idx * element_block_size + 2;
+    read_element<T>(data + addr, element);
+  }
+  // write element at index idx (leaky)
+  void write_leaky(int32_t idx, const T* element)
   {
     const int32_t element_block_size = calc_element_block_size<T>();
     int32_t addr = idx * element_block_size + 2;

@@ -11,7 +11,7 @@ public:
   ROSet(CMO_p rt, int32_t size, const T* _data) : data(rt, size)
   {
     for (int32_t i = 0; i < size; ++i) {
-      data.write(i, &_data[i]);
+      data.write_leaky(i, &_data[i]);
       if (i > 0 && _data[i] < _data[i - 1]) {
         abort_message("ROSet: invalid data\n");
       }
@@ -62,7 +62,7 @@ public:
       struct readonly_map_element<K, V> e;
       e.key = keys[i];
       e.value = values[i];
-      data.write(i, &e);
+      data.write_leaky(i, &e);
       if (i > 0 && keys[i] < keys[i - 1]) {
         abort_message("ROMap: invalid data\n");
       }
