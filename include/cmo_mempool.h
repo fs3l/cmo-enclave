@@ -60,7 +60,7 @@ public:
       data[block_addr] = (prev_addr << 16) | next_addr;
       block_addr = next_addr;
     }
-    nob = init_nob_array(rt, data, data_len);
+    if (rt != nullptr) nob = init_nob_array(rt, data, data_len);
   }
   ~MemoryPool() { delete[] data; }
   void reset_nob(CMO_p rt) { nob = init_nob_array(rt, data, data[0] >> 16); }

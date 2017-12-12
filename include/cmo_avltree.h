@@ -43,7 +43,7 @@ public:
     extra_data = new int32_t[2];
     extra_data[0] = 0;  // root addr
     extra_data[1] = 0;  // num of element
-    nob = init_nob_array(rt, extra_data, 2);
+    if (rt != nullptr) nob = init_nob_array(rt, extra_data, 2);
     this->rt = rt;
   }
   ~AVLTree() { delete[] extra_data; }

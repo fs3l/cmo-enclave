@@ -6,10 +6,11 @@
 
 /**
  * data layout:
- *   max capacity of the queue        [16bit]
- *   element block size               [16bit]
- *   current length                   [16bit]
- *   the index to the first element   [16bit]
+ *   data array length                [32 bits]
+ *   max capacity of the queue        [16 bits]
+ *   element block size               [16 bits]
+ *   current length                   [16 bits]
+ *   the index to the first element   [16 bits]
  *   data...                          [sizeof(element) aligned with 32bits] *
  * capacity
  */
@@ -23,32 +24,34 @@ public:
     if (capacity > UINT16_MAX) cmo_abort(rt, "fail to initialize SimpleQueue");
 
     const int32_t element_block_size = calc_element_block_size<T>();
-    int32_t data_len = 2;  // global meta data
+    int32_t data_len = 3;  // global meta data
     data_len += capacity * element_block_size;
 
     data = new int32_t[data_len];
-    data[0] = capacity << 16 | element_block_size;
-    data[1] = 0;
-    nob = init_nob_array(rt, data, data_len);
+    data[0] = data_len;
+    data[1] = capacity << 16 | element_block_size;
+    data[2] = 0;
+    if (rt != nullptr) nob = init_nob_array(rt, data, data_len);
   }
   ~SimpleQueue() { delete[] data; }
-  int32_t capacity() const { return nob_read_at(nob, 0) >> 16; }
-  int32_t element_block_size() const { return nob_read_at(nob, 0) & 0xffff; }
-  int32_t size() const { return nob_read_at(nob, 1) >> 16; }
-  int32_t front_idx() const { return nob_read_at(nob, 1) & 0xffff; }
+  void reset_nob(CMO_p rt) { nob = init_nob_array(rt, data, data[0]); }
+  int32_t capacity() const { return nob_read_at(nob, 1) >> 16; }
+  int32_t element_block_size() const { return nob_read_at(nob, 1) & 0xffff; }
+  int32_t size() const { return nob_read_at(nob, 2) >> 16; }
+  int32_t front_idx() const { return nob_read_at(nob, 2) & 0xffff; }
   bool empty() const { return size() == 0; }
   bool full() const { return size() == capacity(); }
   void enqueue(T element)
   {
     int32_t idx = front_idx();
     int32_t len = size();
-    int32_t addr = ((idx + len) % capacity()) * element_block_size() + 2;
+    int32_t addr = ((idx + len) % capacity()) * element_block_size() + 3;
     write_element<T>(nob, addr, &element);
-    nob_write_at(nob, 1, (len + 1) << 16 | idx);
+    nob_write_at(nob, 2, (len + 1) << 16 | idx);
   }
   void front(T* element) const
   {
-    int32_t addr = front_idx() * element_block_size() + 2;
+    int32_t addr = front_idx() * element_block_size() + 3;
     read_element<T>(nob, addr, element);
   }
   void dequeue()
@@ -56,7 +59,7 @@ public:
     int32_t idx = front_idx();
     int32_t len = size();
     idx = (idx + 1) % capacity();
-    nob_write_at(nob, 1, (len - 1) << 16 | idx);
+    nob_write_at(nob, 2, (len - 1) << 16 | idx);
   }
 
 private:
@@ -127,7 +130,7 @@ public:
       data[block_addr] = (prev_addr << 16) | next_addr;
       block_addr = next_addr;
     }
-    nob = init_nob_array(rt, data, data_len);
+    if (rt != nullptr) nob = init_nob_array(rt, data, data_len);
   }
   ~MultiQueue() { delete[] data; }
   void reset_nob(CMO_p rt) { nob = init_nob_array(rt, data, data[0]); }

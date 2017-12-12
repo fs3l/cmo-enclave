@@ -25,7 +25,7 @@ public:
     data = new int32_t[data_len];
     data[0] = data_len;
     data[1] = size;
-    nob = init_nob_array(rt, data, data_len);
+    if (rt != nullptr) nob = init_nob_array(rt, data, data_len);
   }
   ~Array() { delete[] data; }
   void reset_nob(CMO_p rt) { nob = init_nob_array(rt, data, data[0]); }
@@ -77,7 +77,7 @@ public:
     data = new int32_t[data_len];
     data[0] = data_len;
     data[1] = size;
-    nob = init_read_nob_array(rt, data, data_len);
+    if (rt != nullptr) nob = init_read_nob_array(rt, data, data_len);
   }
   ~ROArray() { delete[] data; }
   void reset_nob(CMO_p rt) { nob = init_read_nob_array(rt, data, data[0]); }
