@@ -33,7 +33,8 @@ void ecall_element_count(const int32_t* arr_in, int32_t len,
   element_count(arr_in, len, uniq_elements, result);
 }
 
-void ecall_kmeans(const int32_t* x_in, const int32_t* y_in, int32_t len, int32_t k,
-            int32_t* result){
+void ecall_kmeans(const int32_t* x_in, const int32_t* y_in, int32_t len,
+                  int32_t k, int32_t* result)
+{
   kmeans(x_in, y_in, len, k, result);
 }

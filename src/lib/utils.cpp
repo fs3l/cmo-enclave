@@ -23,16 +23,16 @@ int32_t random_int32()
 void cmove_int32(bool cond, const int32_t* src, int32_t* dest)
 {
   // TODO:
-  if(cond) {
+  if (cond) {
     *dest = *src;
   }
   //__asm__(
-      //"mov %rdi, %rax\n\t"
-      //"mov (%rsi), %rbx\n\t"
-      //"mov (%rdx), %rcx\n\t"
-      //"test %rax, %rax\n\t"
-      //"cmovnz %rbx, %rcx\n\t"
-      //"mov %rcx, (%rdx)\n\t");
+  //"mov %rdi, %rax\n\t"
+  //"mov (%rsi), %rbx\n\t"
+  //"mov (%rdx), %rcx\n\t"
+  //"test %rax, %rax\n\t"
+  //"cmovnz %rbx, %rcx\n\t"
+  //"mov %rcx, (%rdx)\n\t");
 }
 
 int32_t* gen_sequence(int32_t len, int32_t start_value)
