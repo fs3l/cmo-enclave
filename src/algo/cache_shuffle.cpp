@@ -25,12 +25,11 @@ static shuffle_bucket_p* _cache_shuffle_spray(const shuffle_bucket_p input,
   const int32_t write_output_len = 2 * num_of_bucket;
   int32_t* write_output = new int32_t[write_output_len];
 
-  CMO_p rt = init_cmo_runtime();
+  CMO_p rt;
+  ReadObIterator_p read_ob;
+  WriteObIterator_p write_ob;
 
-  ReadObIterator_p read_ob = shuffle_bucket_init_read_ob(input, rt);
-  WriteObIterator_p write_ob =
-      init_write_ob_iterator(rt, write_output, write_output_len);
-  MultiQueue<shuffle_element_t> q(rt, 2 * S, num_of_bucket);
+  MultiQueue<shuffle_element_t> q(nullptr, 2 * S, num_of_bucket);
 
   int32_t i, read_idx, write_idx, bucket_idx, write_output_idx;
   shuffle_element_t e;
@@ -38,6 +37,11 @@ static shuffle_bucket_p* _cache_shuffle_spray(const shuffle_bucket_p input,
   read_idx = 0;
   write_idx = 0;
   while (read_idx < len) {
+    rt = init_cmo_runtime();
+    const int32_t read_len = min(len - read_idx, S);
+    read_ob = shuffle_bucket_init_read_ob(input, rt, read_idx, read_len);
+    q.reset_nob(rt);
+
     begin_leaky_sec(rt);
     for (i = 0; i < S && read_idx < len; ++i) {
       e.value = ob_read_next(read_ob);
@@ -50,7 +54,13 @@ static shuffle_bucket_p* _cache_shuffle_spray(const shuffle_bucket_p input,
       }
       ++read_idx;
     }
+    end_leaky_sec(rt);
+    free_cmo_runtime(rt);
 
+    rt = init_cmo_runtime();
+    write_ob = init_write_ob_iterator(rt, write_output, write_output_len);
+    q.reset_nob(rt);
+    begin_leaky_sec(rt);
     for (bucket_idx = 0; bucket_idx < num_of_bucket; ++bucket_idx) {
       e.value = e.perm = -1;
       if (!q.empty(bucket_idx)) {
@@ -61,6 +71,7 @@ static shuffle_bucket_p* _cache_shuffle_spray(const shuffle_bucket_p input,
       ob_write_next(write_ob, e.perm);
     }
     end_leaky_sec(rt);
+    free_cmo_runtime(rt);
 
     write_output_idx = 0;
     for (bucket_idx = 0; bucket_idx < num_of_bucket; ++bucket_idx) {
@@ -71,10 +82,8 @@ static shuffle_bucket_p* _cache_shuffle_spray(const shuffle_bucket_p input,
     }
 
     ++write_idx;
-    reset_write_ob(write_ob);
   }
 
-  free_cmo_runtime(rt);
   delete[] write_output;
 
   for (bucket_idx = 0; bucket_idx < num_of_bucket; ++bucket_idx) {

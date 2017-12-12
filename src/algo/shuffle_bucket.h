@@ -40,6 +40,12 @@ ReadObIterator_p shuffle_bucket_init_read_ob(const shuffle_bucket_p bucket,
                                              CMO_p rt);
 WriteObIterator_p shuffle_bucket_init_write_ob(shuffle_bucket_p bucket,
                                                CMO_p rt);
+ReadObIterator_p shuffle_bucket_init_read_ob(const shuffle_bucket_p bucket,
+                                             CMO_p rt, int32_t start_idx,
+                                             int32_t len);
+WriteObIterator_p shuffle_bucket_init_write_ob(shuffle_bucket_p bucket,
+                                               CMO_p rt, int32_t start_idx,
+                                               int32_t len);
 
 // find a partition number p such that the len can be divided
 // to p partitions with each partition has the size len / p.

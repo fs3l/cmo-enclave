@@ -94,6 +94,20 @@ WriteObIterator_p shuffle_bucket_init_write_ob(shuffle_bucket_p bucket,
   return init_write_ob_iterator(rt, bucket->data, bucket->len * 2);
 }
 
+ReadObIterator_p shuffle_bucket_init_read_ob(const shuffle_bucket_p bucket,
+                                             CMO_p rt, int32_t start_idx,
+                                             int32_t len)
+{
+  return init_read_ob_iterator(rt, bucket->data + start_idx * 2, len * 2);
+}
+
+WriteObIterator_p shuffle_bucket_init_write_ob(shuffle_bucket_p bucket,
+                                               CMO_p rt, int32_t start_idx,
+                                               int32_t len)
+{
+  return init_write_ob_iterator(rt, bucket->data + start_idx * 2, len * 2);
+}
+
 int32_t find_suitable_partitions(int32_t len, int32_t partition)
 {
   return min(partition,
