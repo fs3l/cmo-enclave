@@ -52,13 +52,19 @@ int32_t* gen_random_sequence(int32_t len, int32_t start_value)
 
 void abort_message(const char* fmt, ...)
 {
+#ifdef SGX_ENCLAVE
+  char buffer[512] = {'\0'};
   va_list args;
   va_start(args, fmt);
-  print_message(fmt, args);
+  vsnprintf(buffer, 512, fmt, args);
   va_end(args);
-#ifdef SGX_ENCLAVE
+  ocall_print(buffer);
   ocall_abort();
 #else
+  va_list args;
+  va_start(args, fmt);
+  vprintf(fmt, args);
+  va_end(args);
   abort();
 #endif
 }
