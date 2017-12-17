@@ -20,6 +20,8 @@ void cache_shuffle(const int32_t* arr_in, const int32_t* perm_in,
 void merge_sort(const int32_t* arr_in, int32_t* arr_out, int32_t len,
                 int32_t blow_up_factor);
 
+int64_t merger(int32_t len, int32_t start, int32_t* input, int32_t* values);
+
 struct count_result {
   int32_t element;
   int32_t count;
