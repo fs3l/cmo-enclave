@@ -3,9 +3,9 @@
 
 #include <cstdlib>
 #include <cstring>
-
+#include <stdio.h>
 #define OLD_ALLOC 0
-
+#define DUMMY 1
 // private functions
 void begin_tx(CMO_p rt);
 void end_tx(CMO_p rt);
@@ -41,6 +41,9 @@ int32_t cal_nob(int32_t offset) { return offset + 1152; }
 #endif
 
 CMO_p init_cmo_runtime() { return new CMO_t; }
+#if DUMMY
+void free_cmo_runtime(CMO_p rt) {delete rt;}
+#else
 void free_cmo_runtime(CMO_p rt)
 {
   for (size_t i = 0; i < rt->r_obs.size(); ++i) free_read_ob(rt->r_obs[i]);
@@ -49,6 +52,7 @@ void free_cmo_runtime(CMO_p rt)
   for (size_t i = 0; i < rt->r_nobs.size(); ++i) free_read_nob(rt->r_nobs[i]);
   delete rt;
 }
+#endif
 
 void cmo_abort(CMO_p rt, const char *abort_msg)
 {
@@ -56,7 +60,18 @@ void cmo_abort(CMO_p rt, const char *abort_msg)
   end_leaky_sec(rt);
   abort_message("%s\n", abort_msg);
 }
-
+#if DUMMY
+ReadObIterator_p init_read_ob_iterator(CMO_p rt, const int32_t *data,
+                                       int32_t len)
+{
+  ReadObIterator_p ob = new ReadObIterator_t;
+  ob->rt = rt;
+  ob->data = data;
+  ob->len = len;
+  ob->iter_pos = 0;
+  return ob;
+}
+#else
 ReadObIterator_p init_read_ob_iterator(CMO_p rt, const int32_t *data,
                                        int32_t len)
 {
@@ -73,7 +88,19 @@ ReadObIterator_p init_read_ob_iterator(CMO_p rt, const int32_t *data,
 #endif
   return ob;
 }
+#endif
 
+#if DUMMY
+WriteObIterator_p init_write_ob_iterator(CMO_p rt, int32_t *data, int32_t len)
+{
+  WriteObIterator_p ob = new WriteObIterator_t;
+  ob->rt = rt;
+  ob->data = data;
+  ob->len = len;
+  ob->iter_pos = 0;
+  return ob;
+}
+#else
 WriteObIterator_p init_write_ob_iterator(CMO_p rt, int32_t *data, int32_t len)
 {
   WriteObIterator_p ob = (WriteObIterator_p)(&rt->g_shadow_mem[rt->meta_pos]);
@@ -89,7 +116,18 @@ WriteObIterator_p init_write_ob_iterator(CMO_p rt, int32_t *data, int32_t len)
 #endif
   return ob;
 }
+#endif
 
+#if DUMMY
+NobArray_p init_nob_array(CMO_p rt, int32_t *data, int32_t len)
+{
+  NobArray_p nob = new NobArray_t;
+  nob->rt=rt;
+  nob->data = data;
+  nob->len = len;
+  return nob;
+}
+#else
 NobArray_p init_nob_array(CMO_p rt, int32_t *data, int32_t len)
 {
   NobArray_p nob = (NobArray_p)(&rt->g_shadow_mem[rt->meta_pos]);
@@ -104,7 +142,18 @@ NobArray_p init_nob_array(CMO_p rt, int32_t *data, int32_t len)
 #endif
   return nob;
 }
+#endif
 
+#if DUMMY
+ReadNobArray_p init_read_nob_array(CMO_p rt, int32_t *data, int32_t len)
+{
+  ReadNobArray_p nob = new ReadNobArray_t;
+  nob->rt = rt;
+  nob->data= data;
+  nob->len = len;
+  return nob;
+}
+#else
 ReadNobArray_p init_read_nob_array(CMO_p rt, int32_t *data, int32_t len)
 {
   // TODO
@@ -120,7 +169,13 @@ ReadNobArray_p init_read_nob_array(CMO_p rt, int32_t *data, int32_t len)
 #endif
   return nob;
 }
+#endif
 
+#if DUMMY
+void begin_leaky_sec(CMO_p rt)
+{ 
+}
+#else
 void begin_leaky_sec(CMO_p rt)
 {
   int32_t len_sum = 0;
@@ -178,7 +233,11 @@ void begin_leaky_sec(CMO_p rt)
   }
   begin_tx(rt);
 }
+#endif
 
+#if DUMMY
+void end_leaky_sec(CMO_p rt) {}
+#else
 void end_leaky_sec(CMO_p rt)
 {
   end_tx(rt);
@@ -194,6 +253,19 @@ void end_leaky_sec(CMO_p rt)
   rt->cur_ob_rw = 0;
   rt->cur_nob = 0;
 }
+#endif
+
+#if DUMMY
+int32_t max_read_ob_shadow_mem_size(CMO_p _rt, ReadObIterator_p ob)
+{
+  return ob->len;
+}
+int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
+{
+  // TODO
+  return ob->len;
+}
+#else
 int32_t max_read_ob_shadow_mem_size(CMO_p _rt, ReadObIterator_p ob)
 {
   return min(192, ob->len - ob->shadow_mem_pos);
@@ -203,6 +275,7 @@ int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
   // TODO
   return min(384, ob->len - ob->shadow_mem_pos);
 }
+#endif
 
 void begin_tx(CMO_p rt)
 {
@@ -299,10 +372,21 @@ void end_tx(CMO_p rt)
   }
 }
 
+#if DUMMY
+void free_read_ob(ReadObIterator_p ob) { }
+void free_write_ob(WriteObIterator_p ob) { }
+void free_nob(NobArray_p nob) { }
+void free_read_nob(ReadNobArray_p nob) { }
+#else
 void free_read_ob(ReadObIterator_p ob) { ob->shadow_mem = -1; }
 void free_write_ob(WriteObIterator_p ob) { ob->shadow_mem = -1; }
 void free_nob(NobArray_p nob) { nob->shadow_mem = -1; }
 void free_read_nob(ReadNobArray_p nob) { nob->shadow_mem = -1; }
+#endif
+
+#if DUMMY
+int32_t ob_read_next(ReadObIterator_p ob) {return ob->data[ob->iter_pos++];}
+#else
 int32_t ob_read_next(ReadObIterator_p ob)
 {
   int32_t data = ob->g_shadow_mem[cal_ob(ob->shadow_mem + ob->iter_pos++)];
@@ -313,7 +397,11 @@ int32_t ob_read_next(ReadObIterator_p ob)
   }
   return data;
 }
+#endif
 
+#if DUMMY
+void ob_write_next(WriteObIterator_p ob, int32_t data) {ob->data[ob->iter_pos++] = data;}
+#else
 void ob_write_next(WriteObIterator_p ob, int32_t data)
 {
   ob->g_shadow_mem[cal_ob_rw(ob->shadow_mem + ob->iter_pos++)] = data;
@@ -323,9 +411,31 @@ void ob_write_next(WriteObIterator_p ob, int32_t data)
     begin_tx(ob->rt);
   }
 }
+#endif
 
+#if DUMMY
+void reset_read_ob(ReadObIterator_p ob) {  }
+void reset_write_ob(WriteObIterator_p ob) { }
+#else
 void reset_read_ob(ReadObIterator_p ob) { ob->shadow_mem_pos = 0; }
 void reset_write_ob(WriteObIterator_p ob) { ob->shadow_mem_pos = 0; }
+#endif
+
+#if DUMMY
+int32_t nob_read_at(const NobArray_p nob, int32_t addr)
+{
+  return nob->data[addr];
+}
+void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
+{
+  nob->data[addr] = data;
+}
+
+int32_t nob_read_at(const ReadNobArray_p nob, int32_t addr)
+{
+  return nob->data[addr];
+}
+#else
 int32_t nob_read_at(const NobArray_p nob, int32_t addr)
 {
   return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr)];
@@ -339,5 +449,5 @@ int32_t nob_read_at(const ReadNobArray_p nob, int32_t addr)
 {
   return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr)];
 }
-
+#endif
 void cmo_tx_abort(int code) { print_message("abort! (code %d)\n", code); }

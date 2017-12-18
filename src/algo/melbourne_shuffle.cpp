@@ -140,15 +140,16 @@ static void _melbourne_shuffle(const int32_t* arr_in, const int32_t* perm_in,
 void melbourne_shuffle(const int32_t* arr_in, const int32_t* perm_in,
                        int32_t* arr_out, int32_t len, int32_t blow_up_factor)
 {
-  int32_t* random = gen_random_sequence(len);
-  int32_t* arr_random = new int32_t[len];
-  int32_t* perm_random = new int32_t[len];
+//  int32_t* random = gen_random_sequence(len);
+//  int32_t* arr_random = new int32_t[len];
+//  int32_t* perm_random = new int32_t[len];
 
-  _melbourne_shuffle(arr_in, random, arr_random, len, blow_up_factor);
-  _melbourne_shuffle(perm_in, random, perm_random, len, blow_up_factor);
-  _melbourne_shuffle(arr_random, perm_random, arr_out, len, blow_up_factor);
+//  _melbourne_shuffle(arr_in, random, arr_random, len, blow_up_factor);
+//  _melbourne_shuffle(perm_in, random, perm_random, len, blow_up_factor);
+//  _melbourne_shuffle(arr_random, perm_random, arr_out, len, blow_up_factor);
+  _melbourne_shuffle(arr_in, perm_in, arr_out, len, blow_up_factor);
 
-  delete[] random;
-  delete[] arr_random;
-  delete[] perm_random;
+//  delete[] random;
+//  delete[] arr_random;
+//  delete[] perm_random;
 }
