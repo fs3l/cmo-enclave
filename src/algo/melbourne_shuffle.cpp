@@ -3,7 +3,8 @@
 #include "cmo.h"
 #include "cmo_queue.h"
 #include "utils.h"
-
+#include <stdio.h>
+#define VALUE_4 1
 static void _melbourne_shuffle_distribute(const int32_t* arr_in,
                                           const int32_t* perm_in, int32_t len,
                                           shuffle_bucket_p* buckets,
@@ -11,8 +12,9 @@ static void _melbourne_shuffle_distribute(const int32_t* arr_in,
                                           int32_t p_log_len,
                                           int32_t bucket_idx_len)
 {
-  const int32_t write_output_len = 2 * num_of_bucket * p_log_len;
+  const int32_t write_output_len = 5 * num_of_bucket * p_log_len;
   int32_t* write_output = new int32_t[write_output_len];
+  int32_t* idice =  new int32_t[num_of_bucket];
 
   int32_t i, read_idx, write_idx, bucket_idx, write_output_idx;
   shuffle_element_t e;
@@ -27,49 +29,30 @@ static void _melbourne_shuffle_distribute(const int32_t* arr_in,
         init_read_ob_iterator(rt, arr_in + read_idx, read_len);
     ReadObIterator_p perm_in_ob =
         init_read_ob_iterator(rt, perm_in + read_idx, read_len);
-    MultiQueue<shuffle_element_t> q(rt, num_of_bucket, num_of_bucket);
 
+  for(int i=0;i<write_output_len;i++) write_output[i] = -1;
+  for(int i=0;i<num_of_bucket;i++) idice[i] = 0;
     begin_leaky_sec(rt);
     for (i = 0; i < num_of_bucket && read_idx < len; ++i) {
-     // e.value = ob_read_next(arr_in_ob);
-    //  e.perm = ob_read_next(perm_in_ob);
       e.value = arr_in_ob->data[arr_in_ob->iter_pos++];
       e.perm = perm_in_ob->data[perm_in_ob->iter_pos++];
       bucket_idx = e.perm / bucket_idx_len;
       bucket_idx = min(bucket_idx, num_of_bucket - 1);
-      if (q.full()) cmo_abort(rt, "melbourne_shuffle: queue full");
-      q.push_back(bucket_idx, e);
+      int idx = idice[bucket_idx];
+      write_output[(2*p_log_len)*bucket_idx+2*idx] = e.value;
+#if VALUE_4
+      write_output[(2*p_log_len)*bucket_idx+2*idx+1] = e.value;
+      write_output[(2*p_log_len)*bucket_idx+2*idx+2] = e.value;
+      write_output[(2*p_log_len)*bucket_idx+2*idx+3] = e.value;
+      write_output[(2*p_log_len)*bucket_idx+2*idx+4] = e.perm;
+#else
+      write_output[(2*p_log_len)*bucket_idx+2*idx+1] = e.perm;
+#endif      
+      idx++;
+      idice[bucket_idx] = idx;
       ++read_idx;
     }
     end_leaky_sec(rt);
-    free_cmo_runtime(rt);
-
-    rt = init_cmo_runtime();
-    WriteObIterator_p write_ob =
-        init_write_ob_iterator(rt, write_output, write_output_len);
-    q.reset_nob(rt);
-    begin_leaky_sec(rt);
-
-    for (bucket_idx = 0; bucket_idx < num_of_bucket; ++bucket_idx) {
-      for (i = 0; i < p_log_len; ++i) {
-        e.value = e.perm = -1;
-        if (!q.empty(bucket_idx)) {
-          q.front(bucket_idx, &e);
-          q.pop_front(bucket_idx);
-        }
-        //ob_write_next(write_ob, e.value);
-        //ob_write_next(write_ob, e.perm);
-        write_ob->data[write_ob->iter_pos++] = e.value;
-        write_ob->data[write_ob->iter_pos++] = e.perm;
-      }
-
-      if (!q.empty(bucket_idx)) {
-        cmo_abort(rt, "melbourne_shuffle: queue is not empty");
-      }
-    }
-
-    end_leaky_sec(rt);
-    free_cmo_runtime(rt);
 
     write_output_idx = 0;
     for (bucket_idx = 0; bucket_idx < num_of_bucket; ++bucket_idx) {
@@ -78,6 +61,14 @@ static void _melbourne_shuffle_distribute(const int32_t* arr_in,
             write_output[write_output_idx++];
         buckets[bucket_idx]->data[write_idx + 2 * i + 1] =
             write_output[write_output_idx++];
+#if VALUE_4
+        buckets[bucket_idx]->data[write_idx + 2 * i+ 2] =
+            write_output[write_output_idx++];
+        buckets[bucket_idx]->data[write_idx + 2 * i+ 3] =
+            write_output[write_output_idx++];
+        buckets[bucket_idx]->data[write_idx + 2 * i+ 4] =
+            write_output[write_output_idx++];
+#endif
       }
     }
 
@@ -111,6 +102,11 @@ static void _melbourne_shuffle_cleanup(int32_t* arr_out,
       //e.value = ob_read_next(bucket_ob);
       //e.perm = ob_read_next(bucket_ob);
       e.value = bucket_ob->data[bucket_ob->iter_pos++];
+#if VALUE_4
+      e.value = bucket_ob->data[bucket_ob->iter_pos++];
+      e.value = bucket_ob->data[bucket_ob->iter_pos++];
+      e.value = bucket_ob->data[bucket_ob->iter_pos++];
+#endif
       e.perm = bucket_ob->data[bucket_ob->iter_pos++];
       if (e.perm != -1) {
         //nob_write_at(nob, e.perm - begin_idx, e.value);

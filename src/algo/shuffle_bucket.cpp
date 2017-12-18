@@ -9,7 +9,7 @@ shuffle_bucket_p init_empty_shuffle_bucket(int32_t len, int32_t begin_idx,
   bucket->len = len;
   bucket->begin_idx = begin_idx;
   bucket->end_idx = end_idx;
-  bucket->data = new int32_t[len * 2];
+  bucket->data = new int32_t[len * 5];
   for (int32_t i = 0; i < len; ++i) bucket->data[2 * i + 1] = -1;
   return bucket;
 }
@@ -22,7 +22,7 @@ shuffle_bucket_p init_shuffle_bucket(const int32_t* arr, const int32_t* perm,
   bucket->len = len;
   bucket->begin_idx = begin_idx;
   bucket->end_idx = end_idx;
-  bucket->data = new int32_t[len * 2];
+  bucket->data = new int32_t[len * 5];
   for (int32_t i = 0; i < len; ++i) {
     bucket->data[2 * i] = arr[i];
     bucket->data[2 * i + 1] = perm[i];
@@ -85,27 +85,27 @@ void free_shuffle_buckets(shuffle_bucket_p* buckets, int num_of_bucket)
 ReadObIterator_p shuffle_bucket_init_read_ob(const shuffle_bucket_p bucket,
                                              CMO_p rt)
 {
-  return init_read_ob_iterator(rt, bucket->data, bucket->len * 2);
+  return init_read_ob_iterator(rt, bucket->data, bucket->len * 5);
 }
 
 WriteObIterator_p shuffle_bucket_init_write_ob(shuffle_bucket_p bucket,
                                                CMO_p rt)
 {
-  return init_write_ob_iterator(rt, bucket->data, bucket->len * 2);
+  return init_write_ob_iterator(rt, bucket->data, bucket->len * 5);
 }
 
 ReadObIterator_p shuffle_bucket_init_read_ob(const shuffle_bucket_p bucket,
                                              CMO_p rt, int32_t start_idx,
                                              int32_t len)
 {
-  return init_read_ob_iterator(rt, bucket->data + start_idx * 2, len * 2);
+  return init_read_ob_iterator(rt, bucket->data + start_idx * 5, len * 5);
 }
 
 WriteObIterator_p shuffle_bucket_init_write_ob(shuffle_bucket_p bucket,
                                                CMO_p rt, int32_t start_idx,
                                                int32_t len)
 {
-  return init_write_ob_iterator(rt, bucket->data + start_idx * 2, len * 2);
+  return init_write_ob_iterator(rt, bucket->data + start_idx * 5, len * 5);
 }
 
 int32_t find_suitable_partitions(int32_t len, int32_t partition)
