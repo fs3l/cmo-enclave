@@ -5,7 +5,7 @@
 #include <cstring>
 #include <stdio.h>
 #define OLD_ALLOC 0
-#define DUMMY 1
+#define DUMMY 0
 // private functions
 void begin_tx(CMO_p rt);
 void end_tx(CMO_p rt);
@@ -424,16 +424,30 @@ void reset_write_ob(WriteObIterator_p ob) { ob->shadow_mem_pos = 0; }
 #if DUMMY
 int32_t nob_read_at(const NobArray_p nob, int32_t addr)
 {
-  return nob->data[addr];
+  int res = 0;
+  for (int i=0;i<nob->len;i++) {
+    if (addr == i)
+       res = nob->data[addr];
+  }
+  return res;
 }
 void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
 {
-  nob->data[addr] = data;
+  int res = 0;
+  for (int i=0;i<nob->len;i++) {
+    if (addr == i)
+       nob->data[addr] = data;
+  }
 }
 
 int32_t nob_read_at(const ReadNobArray_p nob, int32_t addr)
 {
-  return nob->data[addr];
+  int res = 0;
+  for (int i=0;i<nob->len;i++) {
+    if (addr == i)
+       res = nob->data[addr];
+  }
+  return res;
 }
 #else
 int32_t nob_read_at(const NobArray_p nob, int32_t addr)
