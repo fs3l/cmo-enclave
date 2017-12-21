@@ -5,9 +5,9 @@
 #include <sys/time.h>
 BOOST_AUTO_TEST_CASE(sorting_net_test)
 {
-  int32_t len = 16777216;
+  int32_t len = 1048576;
   int32_t* input = gen_random_sequence(len);
-  int32_t* values = new int[len*VALUE_SIZE];
+  int32_t* values = new int[len*1];
   struct timeval begin,end;
   gettimeofday(&begin,NULL);
   int64_t res = merger(len, 0, input,values);

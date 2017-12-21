@@ -11,13 +11,12 @@
 
 BOOST_AUTO_TEST_CASE(melbourne_shuffle_test)
 {
-  int32_t len = 16777216;
-  //int32_t len = 16;
+  int32_t len = 1048576;
+  //int32_t len = 100;
   int32_t* input = gen_random_sequence(len);
   int32_t* output = new int32_t[len];
   struct timeval begin,end;
   gettimeofday(&begin,NULL);
-//  for(int i=0;i<len;i++) printf("%d, ",input[i]); printf("\n");
 #ifdef SGX_APP
   ecall_melbourne_shuffle(global_eid, input, input, output, len, 1);
 #else
@@ -25,7 +24,7 @@ BOOST_AUTO_TEST_CASE(melbourne_shuffle_test)
 #endif
   gettimeofday(&end,NULL);
   printf("time spent=%ld\n",1000000*(end.tv_sec-begin.tv_sec)+end.tv_usec-begin.tv_usec);
-//  for (int32_t i = 0; i < len; ++i) BOOST_CHECK(output[i] == i);
+  for (int32_t i = 0; i < len; ++i) BOOST_CHECK(output[i] == i);
   delete[] input;
   delete[] output;
 }

@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-#define VALUE_SIZE 4
 #ifdef __cplusplus
 extern "C" {
 #endif
