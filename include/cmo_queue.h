@@ -35,10 +35,10 @@ public:
   }
   ~SimpleQueue() { delete[] data; }
   void reset_nob(CMO_p rt) { nob = init_nob_array(rt, data, data[0]); }
-  int32_t capacity() const { return nob->data [1] >> 16; }
-  int32_t element_block_size() const { return nob->data[1] & 0xffff; }
-  int32_t size() const { return nob->data[2] >> 16; }
-  int32_t front_idx() const { return nob->data[2] & 0xffff; }
+  int32_t capacity() const { return nob_read_at(nob, 1) >> 16; }
+  int32_t element_block_size() const { return nob_read_at(nob, 1) & 0xffff; }
+  int32_t size() const { return nob_read_at(nob, 2) >> 16; }
+  int32_t front_idx() const { return nob_read_at(nob, 2) & 0xffff; }
   bool empty() const { return size() == 0; }
   bool full() const { return size() == capacity(); }
   void enqueue(T element)
@@ -47,8 +47,7 @@ public:
     int32_t len = size();
     int32_t addr = ((idx + len) % capacity()) * element_block_size() + 3;
     write_element<T>(nob, addr, &element);
-    //nob_write_at(nob, 2, (len + 1) << 16 | idx);
-    nob->data[2] = (len+1) << 16 | idx;
+    nob_write_at(nob, 2, (len + 1) << 16 | idx);
   }
   void front(T* element) const
   {
@@ -60,8 +59,7 @@ public:
     int32_t idx = front_idx();
     int32_t len = size();
     idx = (idx + 1) % capacity();
-    //nob_write_at(nob, 2, (len - 1) << 16 | idx);
-    nob->data[2] = (len - 1) << 16 | idx;
+    nob_write_at(nob, 2, (len - 1) << 16 | idx);
   }
 
 private:
@@ -233,18 +231,15 @@ public:
 private:
   int32_t get_queue_begin_addr(int32_t queue_id) const
   {
-    //return nob_read_at(nob, 3 + queue_id) >> 16;
-    return nob->data[3 + queue_id] >> 16;
+    return nob_read_at(nob, 3 + queue_id) >> 16;
   }
   int32_t get_queue_end_addr(int32_t queue_id) const
   {
-    //return nob_read_at(nob, 3 + queue_id) & 0xffff;
-    return nob->data[3 + queue_id] & 0xffff;
+    return nob_read_at(nob, 3 + queue_id) & 0xffff;
   }
   void set_queue_addr(int32_t queue_id, int32_t begin_addr, int32_t end_addr)
   {
-    //nob_write_at(nob, 3 + queue_id, (begin_addr << 16) | end_addr);
-    nob->data[3 + queue_id] = (begin_addr << 16) | end_addr;
+    nob_write_at(nob, 3 + queue_id, (begin_addr << 16) | end_addr);
   }
   void set_queue_begin_addr(int32_t queue_id, int32_t begin_addr)
   {
@@ -256,18 +251,15 @@ private:
   }
   int32_t get_block_prev_addr(int32_t block_addr) const
   {
-    //return nob_read_at(nob, block_addr) >> 16;
-    return nob->data[block_addr] >> 16;
+    return nob_read_at(nob, block_addr) >> 16;
   }
   int32_t get_block_next_addr(int32_t block_addr) const
   {
-    //return nob_read_at(nob, block_addr) & 0xffff;
-    return nob->data[block_addr] & 0xffff;
+    return nob_read_at(nob, block_addr) & 0xffff;
   }
   void set_block_addr(int32_t block_addr, int32_t prev_addr, int32_t next_addr)
   {
-    //nob_write_at(nob, block_addr, (prev_addr << 16) | next_addr);
-    nob->data[block_addr] = (prev_addr << 16) | next_addr;
+    nob_write_at(nob, block_addr, (prev_addr << 16) | next_addr);
   }
   void set_block_prev_addr(int32_t block_addr, int32_t prev_addr)
   {

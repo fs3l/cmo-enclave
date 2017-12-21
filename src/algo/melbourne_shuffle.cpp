@@ -31,10 +31,8 @@ static void _melbourne_shuffle_distribute(const int32_t* arr_in,
 
     begin_leaky_sec(rt);
     for (i = 0; i < num_of_bucket && read_idx < len; ++i) {
-     // e.value = ob_read_next(arr_in_ob);
-    //  e.perm = ob_read_next(perm_in_ob);
-      e.value = arr_in_ob->data[arr_in_ob->iter_pos++];
-      e.perm = perm_in_ob->data[perm_in_ob->iter_pos++];
+      e.value = ob_read_next(arr_in_ob);
+      e.perm = ob_read_next(perm_in_ob);
       bucket_idx = e.perm / bucket_idx_len;
       bucket_idx = min(bucket_idx, num_of_bucket - 1);
       if (q.full()) cmo_abort(rt, "melbourne_shuffle: queue full");
@@ -57,10 +55,8 @@ static void _melbourne_shuffle_distribute(const int32_t* arr_in,
           q.front(bucket_idx, &e);
           q.pop_front(bucket_idx);
         }
-        //ob_write_next(write_ob, e.value);
-        //ob_write_next(write_ob, e.perm);
-        write_ob->data[write_ob->iter_pos++] = e.value;
-        write_ob->data[write_ob->iter_pos++] = e.perm;
+        ob_write_next(write_ob, e.value);
+        ob_write_next(write_ob, e.perm);
       }
 
       if (!q.empty(bucket_idx)) {
@@ -108,13 +104,10 @@ static void _melbourne_shuffle_cleanup(int32_t* arr_out,
 
     begin_leaky_sec(rt);
     for (i = 0; i < bucket_len; ++i) {
-      //e.value = ob_read_next(bucket_ob);
-      //e.perm = ob_read_next(bucket_ob);
-      e.value = bucket_ob->data[bucket_ob->iter_pos++];
-      e.perm = bucket_ob->data[bucket_ob->iter_pos++];
+      e.value = ob_read_next(bucket_ob);
+      e.perm = ob_read_next(bucket_ob);
       if (e.perm != -1) {
-        //nob_write_at(nob, e.perm - begin_idx, e.value);
-        nob->data[e.perm-begin_idx] = e.value;
+        nob_write_at(nob, e.perm - begin_idx, e.value);
       }
     }
     end_leaky_sec(rt);

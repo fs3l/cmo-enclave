@@ -5,7 +5,7 @@
 #include "utils.h"
 #include <stdio.h>
 #include <string.h>
-#define VALUE_SIZE 1
+#define VALUE_SIZE 4
 int compare(int* i, int* j) {
   int res = 0;
   asm volatile (
@@ -74,9 +74,9 @@ void cas_v2m(int* i, int* j, int* p, int* q) {
     int tmp = *i;
     *i = *j;
     *j = tmp;
-       //memcpy(tmp_v,p,VALUE_SIZE*4);
-       //memcpy(p,q,VALUE_SIZE*4);
-      //memcpy(q,tmp_v,VALUE_SIZE*4);
+       memcpy(tmp_v,p,VALUE_SIZE*4);
+       memcpy(p,q,VALUE_SIZE*4);
+      memcpy(q,tmp_v,VALUE_SIZE*4);
   }
   g_count++;
 }
