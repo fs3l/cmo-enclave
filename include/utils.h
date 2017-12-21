@@ -25,7 +25,6 @@ inline void swap(T* a, T* b)
 }
 
 int32_t random_int32();
-
 void cmove_int32(bool cond, const int32_t* src, int32_t* dest);
 
 template <class T>

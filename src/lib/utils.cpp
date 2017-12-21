@@ -20,19 +20,27 @@ int32_t random_int32()
 #endif
 }
 
-void cmove_int32(bool cond, const int32_t* src, int32_t* dest)
+void cmove_int32(bool cond, const int32_t* src, int32_t* dst)
 {
   // TODO:
+  /*
   if (cond) {
     *dest = *src;
-  }
-  //__asm__(
-  //"mov %rdi, %rax\n\t"
-  //"mov (%rsi), %rbx\n\t"
-  //"mov (%rdx), %rcx\n\t"
-  //"test %rax, %rax\n\t"
-  //"cmovnz %rbx, %rcx\n\t"
-  //"mov %rcx, (%rdx)\n\t");
+  }*/
+  
+  
+  __asm__(
+  "movb %0, %%al\n\t"
+  "mov %1, %%rsi\n\t"
+  "mov %2, %%rdx\n\t"
+  "mov (%%rsi), %%ebx\n\t"
+  "mov (%%rdx), %%ecx\n\t"
+  "test %%rax, %%rax\n\t"
+  "cmovnz %%ebx, %%ecx\n\t"
+  "mov %%ecx, (%%rdx)\n\t"
+  : 
+  : "r"(cond), "r"(src), "r"(dst)
+  : "%rsi", "%rdx", "%rax", "%rbx", "%rcx"); 
 }
 
 int32_t* gen_sequence(int32_t len, int32_t start_value)

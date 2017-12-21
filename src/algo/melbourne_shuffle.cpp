@@ -3,7 +3,115 @@
 #include "cmo.h"
 #include "cmo_queue.h"
 #include "utils.h"
+#define SCAN 1
+#if SCAN
+static void _melbourne_shuffle_distribute(const int32_t* arr_in,
+                                          const int32_t* perm_in, int32_t len,
+                                          shuffle_bucket_p* buckets,
+                                          int32_t num_of_bucket,
+                                          int32_t p_log_len,
+                                          int32_t bucket_idx_len)
+{
+  const int32_t write_output_len = 2 * num_of_bucket * p_log_len;
+  int32_t* write_output = new int32_t[write_output_len];
 
+  int32_t i, read_idx, write_idx, bucket_idx, write_output_idx;
+  shuffle_element_t e;
+
+  read_idx = 0;
+  write_idx = 0;
+  while (read_idx < len) {
+    CMO_p rt = init_cmo_runtime();
+
+    const int32_t read_len = min(len - read_idx, num_of_bucket);
+    ReadObIterator_p arr_in_ob =
+        init_read_ob_iterator(rt, arr_in + read_idx, read_len);
+    ReadObIterator_p perm_in_ob =
+        init_read_ob_iterator(rt, perm_in + read_idx, read_len);
+    MultiQueue<shuffle_element_t> q(rt, num_of_bucket, num_of_bucket);
+
+    for (i = 0; i < num_of_bucket && read_idx < len; ++i) {
+      e.value = arr_in_ob->data[arr_in_ob->iter_pos++];
+      e.perm = perm_in_ob->data[perm_in_ob->iter_pos++];
+      bucket_idx = e.perm / bucket_idx_len;
+      bucket_idx = min(bucket_idx, num_of_bucket - 1);
+      if (q.full()) cmo_abort(rt, "melbourne_shuffle: queue full");
+      q.push_back(bucket_idx, e);
+      ++read_idx;
+    }
+    free_cmo_runtime(rt);
+
+    rt = init_cmo_runtime();
+    WriteObIterator_p write_ob =
+        init_write_ob_iterator(rt, write_output, write_output_len);
+    q.reset_nob(rt);
+
+    for (bucket_idx = 0; bucket_idx < num_of_bucket; ++bucket_idx) {
+      for (i = 0; i < p_log_len; ++i) {
+        e.value = e.perm = -1;
+        if (!q.empty(bucket_idx)) {
+          q.front(bucket_idx, &e);
+          q.pop_front(bucket_idx);
+        }
+        write_ob->data[write_ob->iter_pos++] =  e.value;
+	write_ob->data[write_ob->iter_pos++] = e.perm;
+      }
+
+      if (!q.empty(bucket_idx)) {
+        cmo_abort(rt, "melbourne_shuffle: queue is not empty");
+      }
+    }
+
+    free_cmo_runtime(rt);
+
+    write_output_idx = 0;
+    for (bucket_idx = 0; bucket_idx < num_of_bucket; ++bucket_idx) {
+      for (i = 0; i < p_log_len; ++i) {
+        buckets[bucket_idx]->data[write_idx + 2 * i] =
+            write_output[write_output_idx++];
+        buckets[bucket_idx]->data[write_idx + 2 * i + 1] =
+            write_output[write_output_idx++];
+      }
+    }
+
+    write_idx += p_log_len * 2;
+  }
+
+  delete[] write_output;
+}
+
+static void _melbourne_shuffle_cleanup(int32_t* arr_out,
+                                       shuffle_bucket_p* buckets,
+                                       int32_t num_of_bucket)
+{
+  for (int32_t bucket_idx = 0; bucket_idx < num_of_bucket; ++bucket_idx) {
+    shuffle_bucket_p bucket = buckets[bucket_idx];
+    int32_t bucket_len = bucket->len;
+    int32_t begin_idx = bucket->begin_idx;
+    int32_t end_idx = bucket->end_idx;
+
+    CMO_p rt = init_cmo_runtime();
+
+    ReadObIterator_p bucket_ob = shuffle_bucket_init_read_ob(bucket, rt);
+    NobArray_p nob =
+        init_nob_array(rt, arr_out + begin_idx, end_idx - begin_idx);
+
+    int32_t i;
+    shuffle_element_t e;
+
+    for (i = 0; i < bucket_len; ++i) {
+      e.value = bucket_ob->data[bucket_ob->iter_pos++];
+      e.perm = bucket_ob->data[bucket_ob->iter_pos++];
+      if (e.perm != -1) {
+        nob_write_at(nob, e.perm - begin_idx, e.value);
+      }
+    }
+
+    free_cmo_runtime(rt);
+  }
+}
+
+#else
 static void _melbourne_shuffle_distribute(const int32_t* arr_in,
                                           const int32_t* perm_in, int32_t len,
                                           shuffle_bucket_p* buckets,
@@ -115,7 +223,7 @@ static void _melbourne_shuffle_cleanup(int32_t* arr_out,
     free_cmo_runtime(rt);
   }
 }
-
+#endif
 static void _melbourne_shuffle(const int32_t* arr_in, const int32_t* perm_in,
                                int32_t* arr_out, int32_t len,
                                int32_t blow_up_factor)

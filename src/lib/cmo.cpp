@@ -433,6 +433,7 @@ int32_t nob_read_at(const NobArray_p nob, int32_t addr)
 }
 void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
 {
+  
   for (int i=0;i<nob->len;i++) {
        bool cond = (addr == i);
        cmove_int32(cond,&data,&nob->data[addr]);
