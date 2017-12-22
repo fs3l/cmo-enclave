@@ -5,7 +5,7 @@
 #include <cstring>
 #include <stdio.h>
 #define OLD_ALLOC 0
-#define DUMMY 1
+#define DUMMY 0
 // private functions
 void begin_tx(CMO_p rt);
 void end_tx(CMO_p rt);
@@ -37,7 +37,7 @@ int32_t cal_nob(int32_t offset)
 #else
 int32_t cal_ob(int32_t offset) { return offset + 128; }
 int32_t cal_ob_rw(int32_t offset) { return offset + 512; }
-int32_t cal_nob(int32_t offset) { return offset + 1152; }
+int32_t cal_nob(int32_t offset) { return offset + 896; }
 #endif
 
 CMO_p init_cmo_runtime() { return new CMO_t; }
@@ -189,6 +189,8 @@ void begin_leaky_sec(CMO_p rt)
     if (len_sum > 8192) abort_message("begin_leaky_sec: nob size\n");
   }
 
+  //printf("nob size=%d\n",len_sum);
+  len_sum = 0;
   for (size_t i = 0; i < rt->r_nobs.size(); ++i) {
     // TODO
     ReadNobArray_p nob = rt->r_nobs[i];
@@ -198,22 +200,27 @@ void begin_leaky_sec(CMO_p rt)
     len_sum += nob->len;
     if (len_sum > 8192) abort_message("begin_leaky_sec: r_nob size\n");
   }
+  //printf("read nob size=%d\n",len_sum);
 
+  len_sum = 0;
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem = rt->cur_ob;
     ob->g_shadow_mem = rt->g_shadow_mem;
-    // rt->cur_ob+=ob->len;
+    len_sum+=ob->len;
     rt->cur_ob += 192;
   }
+  //printf("r_ob size=%d\n",len_sum);
 
+  len_sum = 0;
   for (size_t i = 0; i < rt->w_obs.size(); ++i) {
     WriteObIterator_p ob = rt->w_obs[i];
     ob->shadow_mem = rt->cur_ob_rw;
     ob->g_shadow_mem = rt->g_shadow_mem;
-    // rt->cur_ob_rw+=ob->len;
+    len_sum+=ob->len;
     rt->cur_ob_rw += 384;
   }
+  //printf("w_ob size=%d\n",len_sum);
 
   for (size_t i = 0; i < rt->nobs.size(); ++i) {
     NobArray_p nob = rt->nobs[i];
@@ -329,7 +336,7 @@ void begin_tx(CMO_p rt)
       "mov $0, %%eax\n\t"
       "mov %%rdi, %%rcx\n\t"
       "loop_ep_%=:\n\t"
-      "cmpl $7690, %%eax\n\t"
+      "cmpl $4200, %%eax\n\t"
       "jge endloop_ep_%=\n\t"
       "movl (%%rcx), %%r11d\n\t"
       "addl $1, %%eax\n\t"
@@ -340,7 +347,7 @@ void begin_tx(CMO_p rt)
       "mov $0, %%eax\n\t"
       "mov %%rdi, %%rcx\n\t"
       "loop_ip_%=:\n\t"
-      "cmpl $7690, %%eax\n\t"
+      "cmpl $4200, %%eax\n\t"
       "jge endloop_ip_%=\n\t"
       "movl (%%rcx), %%r11d\n\t"
       "addl $1, %%eax\n\t"
