@@ -5,12 +5,30 @@
 #include "utils.h"
 #define SCAN 0
 #include <stdio.h>
+static int search(int32_t* index, int32_t index_len, int32_t key) {
+  int32_t len = index_len;
+  int32_t low = 0;
+  int32_t high = len-1;
+  int32_t mid = 0;
+  int res = 0;
+  while(low<=high) {
+    mid = (high-low)/2 + low;
+    res = index[mid];
+    if (res==key) break;
+    if (res < key) low = mid + 1;
+    else high = mid -1;
+  }
+  printf("return with mid=%d\n",mid);
+  return mid;
+}
+
 static int search(ReadNobArray_p idx, int32_t key) {
   int32_t len = idx->len;
   int32_t low = 0;
   int32_t high = len-1;
   int32_t mid = 0;
   int res = 0;
+  for(int i=0;i<len;i++) printf("nob[%d]=%d\n",i,nob_read_at(idx,i));
   while(low<=high) {
     mid = (high-low)/2 + low;
     res = nob_read_at(idx,mid);
@@ -18,6 +36,7 @@ static int search(ReadNobArray_p idx, int32_t key) {
     if (res < key) low = mid + 1;
     else high = mid -1;
   }
+  printf("return with mid=%d\n",mid);
   return mid;
 }
 
@@ -42,9 +61,10 @@ static void _binary_search(int32_t* index, int32_t index_len, int32_t work_len)
   CMO_p rt = init_cmo_runtime();
   ReadNobArray_p nob =
     init_read_nob_array(rt, index , index_len);
-  printf("nob->len=%d\n",nob->len);
   begin_leaky_sec(rt);
   for(int i=0;i<1;i++) {
+//    search(index,index_len,1);
+//    search(index,index_len,512*1024);
     search(nob,1);
     search(nob,512*1024);
   }
