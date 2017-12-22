@@ -6,6 +6,10 @@
 #include <stdio.h>
 #define OLD_ALLOC 0
 #define DUMMY 0
+#define META_SIZE 128
+#define OB_SIZE 384
+#define L1_SIZE 8192
+#define LLC_SIZE 1048576
 // private functions
 void begin_tx(CMO_p rt);
 void end_tx(CMO_p rt);
@@ -35,10 +39,10 @@ int32_t cal_nob(int32_t offset)
   return (offset / 640) * 1024 + offset % 640 + 112;
 }
 #else
-int32_t cal_ob(int32_t offset) { return offset + 128; }
-int32_t cal_ob_rw(int32_t offset) { return offset + 512; }
-int32_t cal_nob(int32_t offset) { return offset + 896; }
-int32_t cal_read_nob(int32_t offset) { return offset + 128; }
+int32_t cal_ob(int32_t offset) { return offset + META_SIZE; }
+int32_t cal_ob_rw(int32_t offset) { return offset + META_SIZE+OB_SIZE; }
+int32_t cal_nob(int32_t offset) { return offset + META_SIZE+OB_SIZE+OB_SIZE; }
+int32_t cal_read_nob(int32_t offset) { return offset + META_SIZE; }
 #endif
 
 CMO_p init_cmo_runtime() { return new CMO_t; }
@@ -187,7 +191,7 @@ void begin_leaky_sec(CMO_p rt)
     rt->cur_nob += nob->len;
     // TODO cache size dynamically check
     len_sum += nob->len;
-    if (len_sum > 8192) abort_message("begin_leaky_sec: nob size\n");
+    if (len_sum > L1_SIZE) abort_message("begin_leaky_sec: nob size\n");
   }
 
   //printf("nob size=%d\n",len_sum);
@@ -199,7 +203,7 @@ void begin_leaky_sec(CMO_p rt)
     nob->g_shadow_mem = rt->g_shadow_mem;
     rt->cur_nob += nob->len;
     len_sum += nob->len;
-    if (len_sum > 1024*1024) abort_message("begin_leaky_sec: r_nob size\n");
+    if (len_sum > LLC_SIZE) abort_message("begin_leaky_sec: r_nob size\n");
   }
   //printf("read nob size=%d\n",len_sum);
 
@@ -209,7 +213,7 @@ void begin_leaky_sec(CMO_p rt)
     ob->shadow_mem = rt->cur_ob;
     ob->g_shadow_mem = rt->g_shadow_mem;
     len_sum+=ob->len;
-    rt->cur_ob += 192;
+    rt->cur_ob += OB_SIZE/rt->r_obs.size();
   }
   //printf("r_ob size=%d\n",len_sum);
 
@@ -219,7 +223,7 @@ void begin_leaky_sec(CMO_p rt)
     ob->shadow_mem = rt->cur_ob_rw;
     ob->g_shadow_mem = rt->g_shadow_mem;
     len_sum+=ob->len;
-    rt->cur_ob_rw += 384;
+    rt->cur_ob_rw += OB_SIZE/rt->w_obs.size();
   }
   //printf("w_ob size=%d\n",len_sum);
 
@@ -276,12 +280,12 @@ int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 #else
 int32_t max_read_ob_shadow_mem_size(CMO_p _rt, ReadObIterator_p ob)
 {
-  return min(192, ob->len - ob->shadow_mem_pos);
+  return min(OB_SIZE/2, ob->len - ob->shadow_mem_pos);
 }
 int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 {
   // TODO
-  return min(384, ob->len - ob->shadow_mem_pos);
+  return min(OB_SIZE, ob->len - ob->shadow_mem_pos);
 }
 #endif
 
