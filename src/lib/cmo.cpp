@@ -38,6 +38,7 @@ int32_t cal_nob(int32_t offset)
 int32_t cal_ob(int32_t offset) { return offset + 128; }
 int32_t cal_ob_rw(int32_t offset) { return offset + 512; }
 int32_t cal_nob(int32_t offset) { return offset + 896; }
+int32_t cal_read_nob(int32_t offset) { return offset + 128; }
 #endif
 
 CMO_p init_cmo_runtime() { return new CMO_t; }
@@ -198,7 +199,7 @@ void begin_leaky_sec(CMO_p rt)
     nob->g_shadow_mem = rt->g_shadow_mem;
     rt->cur_nob += nob->len;
     len_sum += nob->len;
-    if (len_sum > 8192) abort_message("begin_leaky_sec: r_nob size\n");
+    if (len_sum > 1024*1024) abort_message("begin_leaky_sec: r_nob size\n");
   }
   //printf("read nob size=%d\n",len_sum);
 
@@ -235,7 +236,7 @@ void begin_leaky_sec(CMO_p rt)
     ReadNobArray_p nob = rt->r_nobs[i];
     int inob = nob->shadow_mem;
     for (int i = 0; i < nob->len; i++) {
-      rt->g_shadow_mem[cal_nob(inob + i)] = nob->data[i];
+      rt->g_shadow_mem[cal_read_nob(inob + i)] = nob->data[i];
     }
   }
   begin_tx(rt);
@@ -337,6 +338,7 @@ void begin_tx(CMO_p rt)
       "mov %%rdi, %%rcx\n\t"
       "loop_ep_%=:\n\t"
       "cmpl $4200, %%eax\n\t"
+     // "cmpl $0, %%eax\n\t"
       "jge endloop_ep_%=\n\t"
       "movl (%%rcx), %%r11d\n\t"
       "addl $1, %%eax\n\t"
@@ -348,6 +350,7 @@ void begin_tx(CMO_p rt)
       "mov %%rdi, %%rcx\n\t"
       "loop_ip_%=:\n\t"
       "cmpl $4200, %%eax\n\t"
+      //"cmpl $0, %%eax\n\t"
       "jge endloop_ip_%=\n\t"
       "movl (%%rcx), %%r11d\n\t"
       "addl $1, %%eax\n\t"

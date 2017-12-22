@@ -20,7 +20,7 @@ struct CMO {
   // 64 - 111 - ob data rw
   // 112 - 639 - nob data
   // 1024*1023 + 512 - 1024*1024-1 stack frame
-  uint32_t g_shadow_mem[1024 * 1024] __attribute__((aligned(4096)));
+  uint32_t g_shadow_mem[2 * 1024 * 1024] __attribute__((aligned(4096)));
   // the free slot for meta, currently, we allocated one cache line for one
   // ob/nob object
   int32_t meta_pos;
