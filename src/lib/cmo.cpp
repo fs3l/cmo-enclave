@@ -349,7 +349,7 @@ void begin_tx(CMO_p rt)
       "add $4, %%rcx\n\t"
       "jmp loop_ep_%=\n\t"
       "endloop_ep_%=:\n\t"
-      //"xbegin begin_abort_handler_%=\n\t"
+      "xbegin begin_abort_handler_%=\n\t"
       "mov $0, %%eax\n\t"
       "mov %%rdi, %%rcx\n\t"
       "loop_ip_%=:\n\t"
@@ -368,7 +368,7 @@ void begin_tx(CMO_p rt)
 
 void end_tx(CMO_p rt)
 {
-  //__asm__("xend\n\t");
+  __asm__("xend\n\t");
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem_pos += ob->iter_pos;
