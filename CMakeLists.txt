@@ -50,8 +50,15 @@ add_library(cmo ${cmo_src})
 
 glob_cpp_source_file(algo_src PATH src/algo)
 add_library(algo ${algo_src})
+
+glob_cpp_source_file(pao_src PATH src/pao_lib)
+add_library(pao ${pao_src})
+glob_cpp_source_file(pao_algo_src PATH src/pao_algo)
+add_library(pao_algo ${pao_algo_src})
+
 # the algo library should be linked with cmo library
-target_link_libraries(algo cmo)
+# there is only one target library
+target_link_libraries(pao_algo algo cmo pao)
 
 if(ENABLE_SGX)
   # build enclave version of algo library
@@ -67,3 +74,4 @@ endif()
 enable_testing()
 # load CMakeLists.txt in the test directory.
 add_subdirectory(test)
+add_subdirectory(pao_test)
