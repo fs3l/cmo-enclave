@@ -7,6 +7,7 @@
 #else
 #include "pao_algo.h"
 #endif
+#include <stdio.h>
 
 BOOST_AUTO_TEST_CASE(pao_naive_shuffle_test)
 {

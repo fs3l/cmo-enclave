@@ -5,7 +5,7 @@
 #include <cstring>
 #include <stdio.h>
 #define OLD_ALLOC 0
-#define DUMMY 0
+#define DUMMY 1
 #define META_SIZE 128
 #define OB_SIZE 384
 #define L1_SIZE 8192
