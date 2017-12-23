@@ -1,4 +1,5 @@
-CMAKE_BUILD_TYPE := RelWithDebInfo
+# CMAKE_BUILD_TYPE := RelWithDebInfo
+CMAKE_BUILD_TYPE := Debug
 CMAKE_BUILD_OPTIONS := -DENABLE_SGX=OFF
 
 build: cmake

@@ -11,7 +11,7 @@
 
 BOOST_AUTO_TEST_CASE(pao_naive_shuffle_test)
 {
-  int32_t len = 1000;
+  int32_t len = 10;
   int32_t* input = gen_random_sequence(len);
   int32_t* output = new int32_t[len];
 #ifdef SGX_APP

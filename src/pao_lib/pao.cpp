@@ -5,7 +5,7 @@
 #include <cstring>
 #include <stdio.h>
 #define OLD_ALLOC 0
-#define DUMMY 1
+#define DUMMY 0
 #define META_SIZE 128
 #define OB_SIZE 384
 #define L1_SIZE 8192
@@ -119,6 +119,27 @@ void begin_leaky_sec(PAO_p rt)
 void begin_leaky_sec(PAO_p rt)
 {
 //tttodo preload from disk to memory
+//allocation
+  int32_t len_sum = 0;
+  for (size_t i = 0; i < rt->arrays_ro.size(); ++i) {
+    ArrayRO_p ob = rt->arrays_ro[i];
+    ob->shadow_mem = rt->cur_array_ro;
+    ob->g_shadow_mem = rt->g_shadow_mem;
+    len_sum+=ob->len;
+    rt->cur_array_ro += OB_SIZE/rt->arrays_ro.size();
+  }
+  //printf("r_ob size=%d\n",len_sum);
+
+  len_sum = 0;
+  for (size_t i = 0; i < rt->arrays_rw.size(); ++i) {
+    ArrayRW_p ob = rt->arrays_rw[i];
+    ob->shadow_mem = rt->cur_array_rw;
+    ob->g_shadow_mem = rt->g_shadow_mem;
+    len_sum+=ob->len;
+    rt->cur_array_rw += OB_SIZE/rt->arrays_rw.size();
+  }
+  //printf("w_ob size=%d\n",len_sum);
+
   begin_tx(rt);
 }
 #endif
