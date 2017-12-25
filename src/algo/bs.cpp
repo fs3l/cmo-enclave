@@ -41,13 +41,13 @@ static int search(ReadNobArray_p idx, int32_t key) {
 static void _binary_search(int32_t* index, int32_t index_len, int32_t work_len)
 {
   int res = 0;
-  for(int i=0;i<10;i++) {
+  for(int i=0;i<1000;i++) {
     for(int i=0;i<index_len;i++) {
       bool cond  = (index[i] == 1);
       cmove_int32(cond,&i,&res);
     }
     for(int i=0;i<index_len;i++) {
-      bool cond  = (index[i] == 512*1024);
+      bool cond  = (index[i] == index_len/2);
       cmove_int32(cond,&i,&res);
     }
   }
@@ -58,11 +58,11 @@ static void _binary_search(int32_t* index, int32_t index_len, int32_t work_len)
   CMO_p rt = init_cmo_runtime();
   ReadNobArray_p nob =
     init_read_nob_array(rt, index , index_len);
-  for(int j=0;j<10;j++) {
+  for(int j=0;j<1;j++) {
     begin_leaky_sec(rt);
     for(int i=0;i<1000;i++) {
       search(nob,1);
-      search(nob,512*1024);
+      search(nob,index_len/2);
     }
     end_leaky_sec(rt);
   }

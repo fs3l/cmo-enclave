@@ -10,6 +10,7 @@
 #define OB_SIZE 384
 #define L1_SIZE 8192
 #define LLC_SIZE 1048576
+#define LINE_SIZE 16
 // private functions
 void begin_tx(CMO_p rt);
 void end_tx(CMO_p rt);
