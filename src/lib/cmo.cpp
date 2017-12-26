@@ -9,8 +9,18 @@
 #define META_SIZE 128
 #define OB_SIZE 384
 #define L1_SIZE 8192
-#define LLC_SIZE 1048576
+#define LLC_SIZE 786432
 #define LINE_SIZE 16
+#define SET_SIZE 128
+#define ACTIVE_SET_SIZE 112
+#define NOB_RW_SET 40
+#define L1_SET 64
+#define META_SET 1
+#define OB_RW_SET 7
+#define OB_R_SET 7
+#define NOB_R_SET 7
+#define MAX_NOB_RW_SIZE ACTIVE_SET_SIZE * NOB_RW_SET
+#define MAX_NOB_R_SIZE 786432 * NOB_R_SET / L1_SET
 // private functions
 void begin_tx(CMO_p rt);
 void end_tx(CMO_p rt);
@@ -192,7 +202,7 @@ void begin_leaky_sec(CMO_p rt)
     rt->cur_nob += nob->len;
     // TODO cache size dynamically check
     len_sum += nob->len;
-    if (len_sum > L1_SIZE) abort_message("begin_leaky_sec: nob size\n");
+    if (len_sum > MAX_NOB_RW_SIZE) abort_message("begin_leaky_sec: nob size\n");
   }
 
   //printf("nob size=%d\n",len_sum);
@@ -204,7 +214,7 @@ void begin_leaky_sec(CMO_p rt)
     nob->g_shadow_mem = rt->g_shadow_mem;
     rt->cur_nob += nob->len;
     len_sum += nob->len;
-    if (len_sum > LLC_SIZE) abort_message("begin_leaky_sec: r_nob size\n");
+    if (len_sum > MAX_NOB_R_SIZE) abort_message("begin_leaky_sec: r_nob size\n");
   }
   //printf("read nob size=%d\n",len_sum);
 
