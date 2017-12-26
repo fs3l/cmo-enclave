@@ -53,8 +53,8 @@ int32_t cal_nob(int32_t offset)
 }
 #else
 int32_t cal_ob(int32_t offset) { return offset + META_SIZE; }
-int32_t cal_ob_rw(int32_t offset) { return offset + META_SIZE+OB_SIZE; }
-int32_t cal_nob(int32_t offset) { return offset + META_SIZE+OB_SIZE+OB_SIZE; }
+int32_t cal_ob_rw(int32_t offset) { return offset + META_SIZE+OB_R_SIZE; }
+int32_t cal_nob(int32_t offset) { return offset + META_SIZE+OB_R_SIZE+OB_RW_SIZE; }
 int32_t cal_read_nob(int32_t offset) { return offset + META_SIZE; }
 #endif
 
@@ -288,12 +288,12 @@ int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 #else
 int32_t max_read_ob_shadow_mem_size(CMO_p _rt, ReadObIterator_p ob)
 {
-  return min(OB_SIZE/2, ob->len - ob->shadow_mem_pos);
+  return min(OB_R_SIZE/2, ob->len - ob->shadow_mem_pos);
 }
 int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 {
   // TODO
-  return min(OB_SIZE/1, ob->len - ob->shadow_mem_pos);
+  return min(OB_RW_SIZE/1, ob->len - ob->shadow_mem_pos);
 }
 #endif
 
