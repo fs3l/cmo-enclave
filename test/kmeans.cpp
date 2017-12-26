@@ -10,7 +10,7 @@
 
 BOOST_AUTO_TEST_CASE(kmeans_test)
 {
-  int32_t len = 100000;
+  int32_t len = 100;
   int32_t k = 5;
   int32_t* x_in = new int32_t[len];
   int32_t* y_in = new int32_t[len];

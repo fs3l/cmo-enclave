@@ -212,7 +212,7 @@ void begin_leaky_sec(CMO_p rt)
     if (len_sum > MAX_NOB_RW_SIZE) abort_message("begin_leaky_sec: nob size\n");
   }
 
-  //printf("nob size=%d\n",len_sum);
+  printf("nob_w size=%d\n",len_sum);
   len_sum = 0;
   for (size_t i = 0; i < rt->r_nobs.size(); ++i) {
     // TODO
@@ -223,22 +223,27 @@ void begin_leaky_sec(CMO_p rt)
     len_sum += nob->len;
     if (len_sum > MAX_NOB_R_SIZE) abort_message("begin_leaky_sec: r_nob size\n");
   }
-  //printf("read nob size=%d\n",len_sum);
+  printf("nob_r size=%d\n",len_sum);
 
+  len_sum = 0;
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem = rt->cur_ob;
+    len_sum += ob->len;
     ob->g_shadow_mem = rt->g_shadow_mem;
     rt->cur_ob += OB_R_SIZE/rt->r_obs.size();
   }
+  printf("r_ob size=%d\n",len_sum);
 
+  len_sum = 0;
   for (size_t i = 0; i < rt->w_obs.size(); ++i) {
     WriteObIterator_p ob = rt->w_obs[i];
     ob->shadow_mem = rt->cur_ob_rw;
     ob->g_shadow_mem = rt->g_shadow_mem;
+    len_sum += ob->len;
     rt->cur_ob_rw += OB_RW_SIZE/rt->w_obs.size();
   }
-  //printf("w_ob size=%d\n",len_sum);
+  printf("w_ob size=%d\n",len_sum);
 
   for (size_t i = 0; i < rt->nobs.size(); ++i) {
     NobArray_p nob = rt->nobs[i];
@@ -362,7 +367,7 @@ void begin_tx(CMO_p rt)
       "add $4, %%rcx\n\t"
       "jmp loop_ep_%=\n\t"
       "endloop_ep_%=:\n\t"
-      "xbegin begin_abort_handler_%=\n\t"
+      //"xbegin begin_abort_handler_%=\n\t"
       "mov $0, %%eax\n\t"
       "mov %%rdi, %%rcx\n\t"
       "loop_ip_%=:\n\t"
@@ -381,7 +386,7 @@ void begin_tx(CMO_p rt)
 
 void end_tx(CMO_p rt)
 {
-  __asm__("xend\n\t");
+  //__asm__("xend\n\t");
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem_pos += ob->iter_pos;
