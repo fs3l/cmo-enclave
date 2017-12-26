@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <stdio.h>
-#define OLD_ALLOC 0
+#define OLD_ALLOC 1
 #define DUMMY 0
 #define META_SIZE 128
 #define OB_SIZE 384
@@ -12,13 +12,13 @@
 #define LLC_SIZE 786432
 #define LINE_SIZE 16
 #define SET_SIZE 128
-#define ACTIVE_SET_SIZE 112
-#define NOB_RW_SET 40
+#define ACTIVE_SET_SIZE 96
+#define NOB_RW_SET 44
 #define L1_SET 64
 #define META_SET 1
-#define OB_RW_SET 7
-#define OB_R_SET 7
-#define NOB_R_SET 7
+#define OB_RW_SET 6
+#define OB_R_SET 6
+#define NOB_R_SET 6
 #define MAX_NOB_RW_SIZE ACTIVE_SET_SIZE * NOB_RW_SET
 #define MAX_NOB_R_SIZE LLC_SIZE * NOB_R_SET / L1_SET
 #define OB_RW_SIZE ACTIVE_SET_SIZE * OB_RW_SET
@@ -39,17 +39,22 @@ void cmo_tx_abort(int code);
 #if OLD_ALLOC
 int32_t cal_ob(int32_t offset)
 {
-  return (offset / 48) * 1024 + offset % 48 + 16;
+  return (offset / 96) * 1024 + offset % 96 + 16;
 }
 
 int32_t cal_ob_rw(int32_t offset)
 {
-  return (offset / 48) * 1024 + offset % 48 + 64;
+  return (offset / 96) * 1024 + offset % 96 + 112;
 }
 
 int32_t cal_nob(int32_t offset)
 {
-  return (offset / 640) * 1024 + offset % 640 + 112;
+  return (offset / 704) * 1024 + offset % 704 + 208;
+}
+
+
+int32_t cal_read_nob(int32_t offset) { 
+  return (offset / 96) * 1024 + offset % 96 + 912;
 }
 #else
 int32_t cal_ob(int32_t offset) { return offset + META_SIZE; }
