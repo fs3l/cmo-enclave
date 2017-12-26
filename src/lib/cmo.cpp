@@ -20,7 +20,9 @@
 #define OB_R_SET 7
 #define NOB_R_SET 7
 #define MAX_NOB_RW_SIZE ACTIVE_SET_SIZE * NOB_RW_SET
-#define MAX_NOB_R_SIZE 786432 * NOB_R_SET / L1_SET
+#define MAX_NOB_R_SIZE LLC_SIZE * NOB_R_SET / L1_SET
+#define OB_RW_SIZE ACTIVE_SET_SIZE * OB_RW_SET
+#define OB_R_SIZE ACTIVE_SET_SIZE * OB_R_SET
 // private functions
 void begin_tx(CMO_p rt);
 void end_tx(CMO_p rt);
@@ -218,23 +220,18 @@ void begin_leaky_sec(CMO_p rt)
   }
   //printf("read nob size=%d\n",len_sum);
 
-  len_sum = 0;
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem = rt->cur_ob;
     ob->g_shadow_mem = rt->g_shadow_mem;
-    len_sum+=ob->len;
-    rt->cur_ob += OB_SIZE/rt->r_obs.size();
+    rt->cur_ob += OB_R_SIZE/rt->r_obs.size();
   }
-  //printf("r_ob size=%d\n",len_sum);
 
-  len_sum = 0;
   for (size_t i = 0; i < rt->w_obs.size(); ++i) {
     WriteObIterator_p ob = rt->w_obs[i];
     ob->shadow_mem = rt->cur_ob_rw;
     ob->g_shadow_mem = rt->g_shadow_mem;
-    len_sum+=ob->len;
-    rt->cur_ob_rw += OB_SIZE/rt->w_obs.size();
+    rt->cur_ob_rw += OB_RW_SIZE/rt->w_obs.size();
   }
   //printf("w_ob size=%d\n",len_sum);
 
@@ -296,7 +293,7 @@ int32_t max_read_ob_shadow_mem_size(CMO_p _rt, ReadObIterator_p ob)
 int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 {
   // TODO
-  return min(OB_SIZE, ob->len - ob->shadow_mem_pos);
+  return min(OB_SIZE/1, ob->len - ob->shadow_mem_pos);
 }
 #endif
 
