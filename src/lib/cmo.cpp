@@ -104,6 +104,7 @@ ReadObIterator_p init_read_ob_iterator(CMO_p rt, const int32_t *data,
   ob->len = len;
   ob->shadow_mem_len = ob->shadow_mem_pos = ob->iter_pos = 0;
   rt->r_obs.push_back(ob);
+  ob->alloc = (ALLOC_p)(&rt->g_shadow_mem[1024*6]); 
 #if OLD_ALLOC
   rt->meta_pos += 1024;
 #else
@@ -130,6 +131,7 @@ WriteObIterator_p init_write_ob_iterator(CMO_p rt, int32_t *data, int32_t len)
   ob->rt = rt;
   ob->data = data;
   ob->len = len;
+  ob->alloc = (ALLOC_p)(&rt->g_shadow_mem[1024*6]); 
   ob->shadow_mem_len = ob->shadow_mem_pos = ob->iter_pos = 0;
   rt->w_obs.push_back(ob);
 #if OLD_ALLOC
@@ -156,6 +158,7 @@ NobArray_p init_nob_array(CMO_p rt, int32_t *data, int32_t len)
   NobArray_p nob = (NobArray_p)(&rt->g_shadow_mem[rt->meta_pos]);
   nob->rt = rt;
   nob->data = data;
+  nob->alloc = (ALLOC_p)(&rt->g_shadow_mem[1024*6]); 
   nob->len = len;
   rt->nobs.push_back(nob);
 #if OLD_ALLOC
@@ -184,6 +187,7 @@ ReadNobArray_p init_read_nob_array(CMO_p rt, int32_t *data, int32_t len)
   nob->rt = rt;
   nob->data = data;
   nob->len = len;
+  nob->alloc = (ALLOC_p)(&rt->g_shadow_mem[1024*6]); 
   rt->r_nobs.push_back(nob);
 #if OLD_ALLOC
   rt->meta_pos += 1024;
@@ -201,6 +205,7 @@ void begin_leaky_sec(CMO_p rt)
 #else
 void begin_leaky_sec(CMO_p rt)
 {
+  printf("nobsize=%d,nobwsize=%d,obrsize=%d,obwsize=%d\n",sizeof(NobArray_t),sizeof(ReadNobArray_t),sizeof(ReadObIterator_t),sizeof(WriteObIterator_t));
   int32_t len_sum = 0;
   for (size_t i = 0; i < rt->nobs.size(); ++i) {
     NobArray_p nob = rt->nobs[i];
