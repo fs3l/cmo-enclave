@@ -10,7 +10,7 @@
 
 BOOST_AUTO_TEST_CASE(binary_search_test)
 {
-  int32_t len =	64 * 1024;
+  int32_t len = 64 * 1024;
   int32_t work_len =  1000;
   int32_t* index = new int32_t[len];
   for(int i=0;i<len;i++) index[i] = i;

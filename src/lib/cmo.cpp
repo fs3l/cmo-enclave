@@ -48,7 +48,7 @@ int32_t cal_nob(int32_t offset, ALLOC_p alloc)
 
 
 int32_t cal_read_nob(int32_t offset, ALLOC_p alloc) { 
-  return (offset / 96) * 1024 + offset % 96 + 912;
+  return (offset / (alloc->nob_r*LINE_SIZE)) * 1024 + offset % (alloc->nob_r*LINE_SIZE) + (alloc->meta+alloc->ob_r+alloc->ob_w+alloc->nob_w)*LINE_SIZE;
 }
 #else
 int32_t cal_ob(int32_t offset) { return offset + META_SIZE; }
@@ -204,9 +204,6 @@ void begin_leaky_sec(CMO_p rt)
   available_set--; //for meta
   ALLOC_p alloc = (ALLOC_p)(&rt->g_shadow_mem[1024*6]);
   alloc->meta = 1;
-  alloc->nob_r = 6;
-  alloc->ob_w = 6;
-  alloc->ob_r = 6; 
   int32_t len_sum = 0;
   for (size_t i = 0; i < rt->nobs.size(); ++i) {
     NobArray_p nob = rt->nobs[i];
@@ -238,35 +235,25 @@ void begin_leaky_sec(CMO_p rt)
   int len_sum_r = 0;
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
-    //ob->shadow_mem = rt->cur_ob;
     len_sum_r += ob->len;
     ob->g_shadow_mem = rt->g_shadow_mem;
-   // rt->cur_ob += OB_R_SIZE/rt->r_obs.size();
   }
-  //printf("r_ob size=%d\n",len_sum);
-
-  //alloc->ob_r = len_sum_r/65536 + 1;
-  //if (len_sum > available_llc || alloc->nob_r > available_set) abort_message("ob_r size\n"); 
-  //available_set -= alloc->nob_r;
-  //available_llc -= len_sum;
-
-
+ 
   len_sum = 0;
   for (size_t i = 0; i < rt->w_obs.size(); ++i) {
     WriteObIterator_p ob = rt->w_obs[i];
-  //  ob->shadow_mem = rt->cur_ob_rw;
     ob->g_shadow_mem = rt->g_shadow_mem;
     len_sum += ob->len;
-  //  rt->cur_ob_rw += OB_RW_SIZE/rt->w_obs.size();
   }
 
+  if (len_sum!=0 || len_sum_r!=0) {
   alloc->ob_w = (available_set)*(len_sum)/(len_sum+len_sum_r);
   alloc->ob_r = available_set -= alloc->ob_w;
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem = rt->cur_ob;
     rt->cur_ob += ((alloc->ob_r)*96)/rt->r_obs.size();
-  }
+  }}
 
   for (size_t i = 0; i < rt->w_obs.size(); ++i) {
     WriteObIterator_p ob = rt->w_obs[i];
@@ -285,7 +272,6 @@ void begin_leaky_sec(CMO_p rt)
   }
 
   for (size_t i = 0; i < rt->r_nobs.size(); ++i) {
-    // TODO
     ReadNobArray_p nob = rt->r_nobs[i];
     int inob = nob->shadow_mem;
     for (int i = 0; i < nob->len; i++) {
@@ -329,12 +315,12 @@ int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 #else
 int32_t max_read_ob_shadow_mem_size(CMO_p _rt, ReadObIterator_p ob)
 {
-  return min(OB_R_SIZE/2, ob->len - ob->shadow_mem_pos);
+  return min((int)((ob->alloc->ob_r*96)/(_rt->r_obs.size())), ob->len - ob->shadow_mem_pos);
 }
 int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 {
   // TODO
-  return min(OB_RW_SIZE/1, ob->len - ob->shadow_mem_pos);
+  return min((int)((ob->alloc->ob_w*96)/(_rt->w_obs.size())), ob->len - ob->shadow_mem_pos);
 }
 #endif
 
@@ -397,7 +383,7 @@ void begin_tx(CMO_p rt)
       "add $4, %%rcx\n\t"
       "jmp loop_ep_%=\n\t"
       "endloop_ep_%=:\n\t"
-      "xbegin begin_abort_handler_%=\n\t"
+      //"xbegin begin_abort_handler_%=\n\t"
       "mov $0, %%eax\n\t"
       "mov %%rdi, %%rcx\n\t"
       "loop_ip_%=:\n\t"
@@ -415,7 +401,7 @@ void begin_tx(CMO_p rt)
 
 void end_tx(CMO_p rt)
 {
-  __asm__("xend\n\t");
+  //__asm__("xend\n\t");
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem_pos += ob->iter_pos;
