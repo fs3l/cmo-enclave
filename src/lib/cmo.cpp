@@ -9,7 +9,7 @@
 #define META_SIZE 128
 #define OB_SIZE 384
 #define L1_SIZE 8192
-#define LLC_SIZE 786432
+#define LLC_SIZE 1048576
 #define LINE_SIZE 16
 #define SET_SIZE 128
 #define ACTIVE_SET_SIZE 96
@@ -227,7 +227,8 @@ void begin_leaky_sec(CMO_p rt)
     rt->cur_nob += nob->len;
     len_sum += nob->len;
   }
-  alloc->nob_r = len_sum/65536 + 1;
+  printf("nob_r=%d\n",len_sum);
+  alloc->nob_r = len_sum/(1024*24) + 1;
   if (len_sum > available_llc || alloc->nob_r > available_set) abort_message("nob_r size\n"); 
   available_set -= alloc->nob_r;
   available_llc -= len_sum;
@@ -383,7 +384,7 @@ void begin_tx(CMO_p rt)
       "add $4, %%rcx\n\t"
       "jmp loop_ep_%=\n\t"
       "endloop_ep_%=:\n\t"
-      //"xbegin begin_abort_handler_%=\n\t"
+      "xbegin begin_abort_handler_%=\n\t"
       "mov $0, %%eax\n\t"
       "mov %%rdi, %%rcx\n\t"
       "loop_ip_%=:\n\t"
@@ -401,7 +402,7 @@ void begin_tx(CMO_p rt)
 
 void end_tx(CMO_p rt)
 {
-  //__asm__("xend\n\t");
+  __asm__("xend\n\t");
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem_pos += ob->iter_pos;
