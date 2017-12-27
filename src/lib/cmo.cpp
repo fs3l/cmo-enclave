@@ -37,23 +37,23 @@ extern "C" {
 void cmo_tx_abort(int code);
 }
 #if OLD_ALLOC
-int32_t cal_ob(int32_t offset)
+int32_t cal_ob(int32_t offset, ALLOC_p alloc)
 {
-  return (offset / 96) * 1024 + offset % 96 + 16;
+  return (offset / (alloc->ob_r*LINE_SIZE)) * 1024 + offset % (alloc->ob_r*LINE_SIZE) + alloc->meta*LINE_SIZE;
 }
 
-int32_t cal_ob_rw(int32_t offset)
+int32_t cal_ob_rw(int32_t offset, ALLOC_p alloc)
 {
-  return (offset / 96) * 1024 + offset % 96 + 112;
+  return (offset / (alloc->ob_w*LINE_SIZE)) * 1024 + offset % (alloc->ob_w*LINE_SIZE) + (alloc->meta + alloc->ob_r)*LINE_SIZE;
 }
 
-int32_t cal_nob(int32_t offset)
+int32_t cal_nob(int32_t offset, ALLOC_p alloc)
 {
-  return (offset / 704) * 1024 + offset % 704 + 208;
+  return (offset / (alloc->nob_w*LINE_SIZE)) * 1024 + offset % (alloc->nob_w*LINE_SIZE) + (alloc->meta+alloc->ob_r+alloc->ob_w)*LINE_SIZE;
 }
 
 
-int32_t cal_read_nob(int32_t offset) { 
+int32_t cal_read_nob(int32_t offset, ALLOC_p alloc) { 
   return (offset / 96) * 1024 + offset % 96 + 912;
 }
 #else
@@ -205,7 +205,6 @@ void begin_leaky_sec(CMO_p rt)
 #else
 void begin_leaky_sec(CMO_p rt)
 {
-  printf("nobsize=%d,nobwsize=%d,obrsize=%d,obwsize=%d\n",sizeof(NobArray_t),sizeof(ReadNobArray_t),sizeof(ReadObIterator_t),sizeof(WriteObIterator_t));
   int32_t len_sum = 0;
   for (size_t i = 0; i < rt->nobs.size(); ++i) {
     NobArray_p nob = rt->nobs[i];
@@ -217,7 +216,7 @@ void begin_leaky_sec(CMO_p rt)
     if (len_sum > MAX_NOB_RW_SIZE) abort_message("begin_leaky_sec: nob size\n");
   }
 
-  printf("nob_w size=%d\n",len_sum);
+  //printf("nob_w size=%d\n",len_sum);
   len_sum = 0;
   for (size_t i = 0; i < rt->r_nobs.size(); ++i) {
     // TODO
@@ -228,7 +227,7 @@ void begin_leaky_sec(CMO_p rt)
     len_sum += nob->len;
     if (len_sum > MAX_NOB_R_SIZE) abort_message("begin_leaky_sec: r_nob size\n");
   }
-  printf("nob_r size=%d\n",len_sum);
+  //printf("nob_r size=%d\n",len_sum);
 
   len_sum = 0;
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
@@ -238,7 +237,7 @@ void begin_leaky_sec(CMO_p rt)
     ob->g_shadow_mem = rt->g_shadow_mem;
     rt->cur_ob += OB_R_SIZE/rt->r_obs.size();
   }
-  printf("r_ob size=%d\n",len_sum);
+  //printf("r_ob size=%d\n",len_sum);
 
   len_sum = 0;
   for (size_t i = 0; i < rt->w_obs.size(); ++i) {
@@ -248,13 +247,18 @@ void begin_leaky_sec(CMO_p rt)
     len_sum += ob->len;
     rt->cur_ob_rw += OB_RW_SIZE/rt->w_obs.size();
   }
-  printf("w_ob size=%d\n",len_sum);
-
+  //printf("w_ob size=%d\n",len_sum);
+  ALLOC_p alloc = (ALLOC_p)(&rt->g_shadow_mem[1024*6]);
+  alloc->meta = 1;
+  alloc->nob_w =  44;
+  alloc->nob_r = 6;
+  alloc->ob_w = 6;
+  alloc->ob_r = 6; 
   for (size_t i = 0; i < rt->nobs.size(); ++i) {
     NobArray_p nob = rt->nobs[i];
     int inob = nob->shadow_mem;
     for (int i = 0; i < nob->len; i++) {
-      rt->g_shadow_mem[cal_nob(inob + i)] = nob->data[i];
+      rt->g_shadow_mem[cal_nob(inob + i,nob->alloc)] = nob->data[i];
     }
   }
 
@@ -263,7 +267,7 @@ void begin_leaky_sec(CMO_p rt)
     ReadNobArray_p nob = rt->r_nobs[i];
     int inob = nob->shadow_mem;
     for (int i = 0; i < nob->len; i++) {
-      rt->g_shadow_mem[cal_read_nob(inob + i)] = nob->data[i];
+      rt->g_shadow_mem[cal_read_nob(inob + i,nob->alloc)] = nob->data[i];
     }
   }
   begin_tx(rt);
@@ -280,7 +284,7 @@ void end_leaky_sec(CMO_p rt)
     NobArray_p nob = rt->nobs[i];
     int inob = nob->shadow_mem;
     for (int i = 0; i < nob->len; i++) {
-      nob->data[i] = rt->g_shadow_mem[cal_nob(inob + i)];
+      nob->data[i] = rt->g_shadow_mem[cal_nob(inob + i,nob->alloc)];
     }
   }
   rt->meta_pos = 0;
@@ -322,7 +326,7 @@ void begin_tx(CMO_p rt)
 
     // TODO REMOVE memory copy here!!!
     for (int i = 0; i < ob->shadow_mem_len; i++) {
-      rt->g_shadow_mem[cal_ob(iob + i)] = ob->data[ob->shadow_mem_pos + i];
+      rt->g_shadow_mem[cal_ob(iob + i,ob->alloc)] = ob->data[ob->shadow_mem_pos + i];
     }
   }
 
@@ -332,7 +336,7 @@ void begin_tx(CMO_p rt)
     ob->iter_pos = 0;
     int iob = ob->shadow_mem;
     for (int i = 0; i < ob->shadow_mem_len; i++) {
-      rt->g_shadow_mem[cal_ob_rw(iob + i)] = ob->data[ob->shadow_mem_pos + i];
+      rt->g_shadow_mem[cal_ob_rw(iob + i,ob->alloc)] = ob->data[ob->shadow_mem_pos + i];
     }
   }
 
@@ -402,7 +406,7 @@ void end_tx(CMO_p rt)
     WriteObIterator_p ob = rt->w_obs[i];
     int iob = ob->shadow_mem;
     for (int i = 0; i < ob->shadow_mem_len; i++) {
-      ob->data[ob->shadow_mem_pos + i] = rt->g_shadow_mem[cal_ob_rw(iob + i)];
+      ob->data[ob->shadow_mem_pos + i] = rt->g_shadow_mem[cal_ob_rw(iob + i,ob->alloc)];
     }
     ob->shadow_mem_pos += ob->iter_pos;
     ob->shadow_mem_len = 0;
@@ -426,7 +430,7 @@ int32_t ob_read_next(ReadObIterator_p ob) {return ob->data[ob->iter_pos++];}
 #else
 int32_t ob_read_next(ReadObIterator_p ob)
 {
-  int32_t data = ob->g_shadow_mem[cal_ob(ob->shadow_mem + ob->iter_pos++)];
+  int32_t data = ob->g_shadow_mem[cal_ob(ob->shadow_mem + ob->iter_pos++,ob->alloc)];
   if (ob->iter_pos == ob->shadow_mem_len &&
       ob->shadow_mem_pos + ob->shadow_mem_len < ob->len) {
     end_tx(ob->rt);
@@ -441,7 +445,7 @@ void ob_write_next(WriteObIterator_p ob, int32_t data) {ob->data[ob->iter_pos++]
 #else
 void ob_write_next(WriteObIterator_p ob, int32_t data)
 {
-  ob->g_shadow_mem[cal_ob_rw(ob->shadow_mem + ob->iter_pos++)] = data;
+  ob->g_shadow_mem[cal_ob_rw(ob->shadow_mem + ob->iter_pos++,ob->alloc)] = data;
   if (ob->iter_pos == ob->shadow_mem_len &&
       ob->shadow_mem_pos + ob->shadow_mem_len < ob->len) {
     end_tx(ob->rt);
@@ -489,16 +493,16 @@ int32_t nob_read_at(const ReadNobArray_p nob, int32_t addr)
 #else
 int32_t nob_read_at(const NobArray_p nob, int32_t addr)
 {
-  return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr)];
+  return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)];
 }
 void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
 {
-  nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr)] = data;
+  nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)] = data;
 }
 
 int32_t nob_read_at(const ReadNobArray_p nob, int32_t addr)
 {
-  return nob->g_shadow_mem[cal_read_nob(nob->shadow_mem + addr)];
+  return nob->g_shadow_mem[cal_read_nob(nob->shadow_mem + addr,nob->alloc)];
 }
 #endif
 void cmo_tx_abort(int code) { print_message("abort! (code %d)\n", code); }
