@@ -227,7 +227,6 @@ void begin_leaky_sec(CMO_p rt)
     rt->cur_nob += nob->len;
     len_sum += nob->len;
   }
-  printf("nob_r=%d\n",len_sum);
   alloc->nob_r = len_sum/(1024*24) + 1;
   if (len_sum > available_llc || alloc->nob_r > available_set) abort_message("nob_r size\n"); 
   available_set -= alloc->nob_r;
