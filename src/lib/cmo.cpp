@@ -12,7 +12,7 @@
 #define LLC_SIZE 1048576
 #define LINE_SIZE 16
 #define SET_SIZE 128
-#define ACTIVE_SET_SIZE 96
+#define ACTIVE_SET_SIZE 80
 #define L1_SET 64
 #define META_SET 1
 #define OB_RW_SIZE ACTIVE_SET_SIZE * 6
@@ -213,7 +213,7 @@ void begin_leaky_sec(CMO_p rt)
     len_sum += nob->len;
   }
  
-  alloc->nob_w = len_sum/96 + 1;
+  alloc->nob_w = len_sum/ACTIVE_SET_SIZE + 1;
   if (len_sum > available_llc || alloc->nob_w > available_set) abort_message("nob_w size\n"); 
   available_set -= alloc->nob_w; 
   available_llc -= len_sum;
@@ -252,13 +252,13 @@ void begin_leaky_sec(CMO_p rt)
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem = rt->cur_ob;
-    rt->cur_ob += ((alloc->ob_r)*96)/rt->r_obs.size();
+    rt->cur_ob += ((alloc->ob_r)*ACTIVE_SET_SIZE)/rt->r_obs.size();
   }}
 
   for (size_t i = 0; i < rt->w_obs.size(); ++i) {
     WriteObIterator_p ob = rt->w_obs[i];
     ob->shadow_mem = rt->cur_ob_rw;
-    rt->cur_ob_rw += ((alloc->ob_w)*96)/rt->w_obs.size();
+    rt->cur_ob_rw += ((alloc->ob_w)*ACTIVE_SET_SIZE)/rt->w_obs.size();
   }
 
   
@@ -315,12 +315,12 @@ int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 #else
 int32_t max_read_ob_shadow_mem_size(CMO_p _rt, ReadObIterator_p ob)
 {
-  return min((int)((ob->alloc->ob_r*96)/(_rt->r_obs.size())), ob->len - ob->shadow_mem_pos);
+  return min((int)((ob->alloc->ob_r*ACTIVE_SET_SIZE)/(_rt->r_obs.size())), ob->len - ob->shadow_mem_pos);
 }
 int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 {
   // TODO
-  return min((int)((ob->alloc->ob_w*96)/(_rt->w_obs.size())), ob->len - ob->shadow_mem_pos);
+  return min((int)((ob->alloc->ob_w*ACTIVE_SET_SIZE)/(_rt->w_obs.size())), ob->len - ob->shadow_mem_pos);
 }
 #endif
 
