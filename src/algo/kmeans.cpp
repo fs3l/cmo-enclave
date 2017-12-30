@@ -2,7 +2,7 @@
 #include "cmo.h"
 #include "cmo_array.h"
 #include "utils.h"
-
+#include <stdio.h>
 static int32_t _kmeans_distance(int32_t x1, int32_t y1, int32_t x2, int32_t y2)
 {
   int32_t delta_x = x1 - x2;
@@ -91,9 +91,11 @@ static void _kmeans_reduce(const int32_t* x_in, const int32_t* y_in,
   for (i = 0; i < len; ++i) {
     id = ob_read_next(ids_ob);
     centers.read(id, &center);
+    printf("read with id=%d, and center.x=%d and center.y=%d and center.count=%d\n",id,center.x,center.y,center.count);
     center.x += ob_read_next(x_ob);
     center.y += ob_read_next(y_ob);
     center.count++;
+    //printf("write with id=%d, and center.x=%d and center.y=%d and center.count=%d\n",id,center.x,center.y,center.count);
     centers.write(id, &center);
   }
 

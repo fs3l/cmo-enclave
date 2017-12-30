@@ -7,10 +7,10 @@
 #else
 #include "algo.h"
 #endif
-
+#include <sys/time.h>
 BOOST_AUTO_TEST_CASE(kmeans_test)
 {
-  int32_t len = 100000;
+  int32_t len = 1048576;
   int32_t k = 5;
   int32_t* x_in = new int32_t[len];
   int32_t* y_in = new int32_t[len];
@@ -21,11 +21,15 @@ BOOST_AUTO_TEST_CASE(kmeans_test)
     y_in[i] = (i % k) * 10000 + random_int32() % 10;
   }
 
+  struct timeval begin,end;
+  gettimeofday(&begin,NULL);
 #ifdef SGX_APP
   ecall_kmeans(global_eid, x_in, y_in, len, k, output);
 #else
   kmeans(x_in, y_in, len, k, output);
 #endif
+  gettimeofday(&end,NULL);
+  printf("time spent=%ld\n",1000000*(end.tv_sec-begin.tv_sec)+end.tv_usec-begin.tv_usec);
 
   for (int32_t i = k; i < len; ++i) {
     BOOST_CHECK(output[i] == output[i % k]);
