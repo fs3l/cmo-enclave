@@ -19,6 +19,14 @@ int32_t random_int32()
   return rand() % INT32_MAX;
 #endif
 }
+void cmove_int64(bool cond, const int64_t* src, int64_t* dst)
+{
+  // TODO:
+  
+  if (cond) {
+    *dst = *src;
+  }
+}
 
 void cmove_int32(bool cond, const int32_t* src, int32_t* dst)
 {

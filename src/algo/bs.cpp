@@ -3,7 +3,7 @@
 #include "cmo.h"
 #include "cmo_queue.h"
 #include "utils.h"
-#define SCAN 0
+#define SCAN 1
 #include <stdio.h>
 static int search(int32_t* index, int32_t index_len, int32_t key) {
   int32_t len = index_len;

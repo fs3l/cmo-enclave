@@ -5,7 +5,7 @@
 #include <cstring>
 #include <stdio.h>
 #define OLD_ALLOC 1
-#define DUMMY 1
+#define DUMMY 0
 #define META_SIZE 128
 #define OB_SIZE 384
 #define L1_SIZE 8192
@@ -476,7 +476,6 @@ void reset_write_ob(WriteObIterator_p ob) { ob->shadow_mem_pos = 0; }
 #if DUMMY
 int32_t nob_read_at(const NobArray_p nob, int32_t addr)
 {
-  return nob->data[addr];
   int res = 0;
   for (int i=0;i<nob->len;i++) {
        bool cond = (addr == i);
@@ -486,7 +485,6 @@ int32_t nob_read_at(const NobArray_p nob, int32_t addr)
 }
 void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
 {
-  nob->data[addr]=data;return; 
   for (int i=0;i<nob->len;i++) {
        bool cond = (addr == i);
        cmove_int32(cond,&data,&nob->data[addr]);

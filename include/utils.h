@@ -26,6 +26,7 @@ inline void swap(T* a, T* b)
 
 int32_t random_int32();
 void cmove_int32(bool cond, const int32_t* src, int32_t* dest);
+void cmove_int64(bool cond, const int64_t* src, int64_t* dest);
 
 template <class T>
 void fisher_yates_shuffle(T* arr, int32_t len)

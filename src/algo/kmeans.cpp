@@ -3,10 +3,10 @@
 #include "cmo_array.h"
 #include "utils.h"
 #include <stdio.h>
-static int32_t _kmeans_distance(int32_t x1, int32_t y1, int32_t x2, int32_t y2)
+static int64_t _kmeans_distance(int32_t x1, int32_t y1, int32_t x2, int32_t y2)
 {
-  int32_t delta_x = x1 - x2;
-  int32_t delta_y = y1 - y2;
+  int64_t delta_x = x1 - x2;
+  int64_t delta_y = y1 - y2;
   return delta_x * delta_x + delta_y * delta_y;
 }
 
@@ -16,13 +16,13 @@ static void _kmeans_map(const int32_t* x_in, const int32_t* y_in, int32_t len,
 {
   for (int32_t i = 0; i < len; ++i) {
     int32_t id = 0;
-    int32_t dist =
+    int64_t dist =
         _kmeans_distance(x_in[i], y_in[i], center_x[id], center_y[id]);
     for (int32_t j = 1; j < k; ++j) {
-      int32_t new_dist =
+      int64_t new_dist =
           _kmeans_distance(x_in[i], y_in[i], center_x[j], center_y[j]);
       bool cond = new_dist < dist;
-      cmove_int32(cond, &new_dist, &dist);
+      cmove_int64(cond, &new_dist, &dist);
       cmove_int32(cond, &j, &id);
     }
     result[i] = id;
@@ -30,8 +30,8 @@ static void _kmeans_map(const int32_t* x_in, const int32_t* y_in, int32_t len,
 }
 
 struct kmeans_center {
-  int32_t x;
-  int32_t y;
+  int64_t x;
+  int64_t y;
   int32_t count;
 };
 typedef struct kmeans_center kmeans_center_t;
@@ -91,11 +91,9 @@ static void _kmeans_reduce(const int32_t* x_in, const int32_t* y_in,
   for (i = 0; i < len; ++i) {
     id = ob_read_next(ids_ob);
     centers.read(id, &center);
-    printf("read with id=%d, and center.x=%d and center.y=%d and center.count=%d\n",id,center.x,center.y,center.count);
     center.x += ob_read_next(x_ob);
     center.y += ob_read_next(y_ob);
     center.count++;
-    //printf("write with id=%d, and center.x=%d and center.y=%d and center.count=%d\n",id,center.x,center.y,center.count);
     centers.write(id, &center);
   }
 
