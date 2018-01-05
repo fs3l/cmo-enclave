@@ -40,6 +40,7 @@ void fisher_yates_shuffle(T* arr, int32_t len)
 int32_t* gen_sequence(int32_t len, int32_t start_value = 0);
 
 int32_t* gen_random_sequence(int32_t len, int32_t start_value = 0);
+int32_t* gen_random_alphabeta_sequence(int32_t len);
 
 void abort_message(const char* fmt, ...);
 

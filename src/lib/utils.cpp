@@ -66,6 +66,13 @@ int32_t* gen_random_sequence(int32_t len, int32_t start_value)
   return result;
 }
 
+int32_t* gen_random_alphabeta_sequence(int32_t len) {
+  int32_t* result = new int32_t[len];
+  int32_t i = 0;
+  while (i<len) result[i++] = random_int32()%26;
+  return result;
+}
+
 void abort_message(const char* fmt, ...)
 {
 #ifdef SGX_ENCLAVE

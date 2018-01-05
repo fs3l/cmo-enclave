@@ -22,6 +22,7 @@ void merge_sort(const int32_t* arr_in, int32_t* arr_out, int32_t len,
 
 int64_t merger(int32_t len, int32_t start, int32_t* input, int32_t* values);
 void binary_search(int32_t* index, int32_t index_len, int32_t work_len);
+void wordcnt(int32_t* input, int32_t* output, int32_t len);
 struct count_result {
   int32_t element;
   int32_t count;
