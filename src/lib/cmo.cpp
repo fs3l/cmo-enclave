@@ -197,6 +197,95 @@ void begin_leaky_sec(CMO_p rt)
 { 
 }
 #else
+#if PFO
+void begin_leaky_sec(CMO_p rt)
+{
+  rt->l1counts = (L1_p)(&rt->g_shadow_mem[rt->meta_pos]);
+  for(int ii=0;ii<L1_SETS;ii++) rt->l1counts->counts[ii]=0;
+//L1_SETS has to be 64, as a cacheline is 64 bytes.
+//printf("size %d\n", sizeof(*rt->l1counts));
+#if OLD_ALLOC
+  rt->meta_pos += 1024;
+#else
+  rt->meta_pos += 16;
+#endif
+
+//  printf("start begin_leaky\n");
+  ALLOC_p alloc = (ALLOC_p)(&rt->g_shadow_mem[1024*6]);
+  alloc->meta = 1;
+  int32_t len_sum = 0;
+  for (size_t i = 0; i < rt->nobs.size(); ++i) {
+    NobArray_p nob = rt->nobs[i];
+    nob->shadow_mem = rt->cur_nob;
+    nob->g_shadow_mem = rt->g_shadow_mem;
+    rt->cur_nob += nob->len;
+    len_sum += nob->len;
+  }
+//  printf("nob_w size=%d and nob_w count=%d\n",len_sum,rt->nobs.size()); 
+
+  alloc->nob_w = len_sum/ACTIVE_SET_SIZE + 1;
+
+  len_sum = 0;
+  for (size_t i = 0; i < rt->r_nobs.size(); ++i) {
+    ReadNobArray_p nob = rt->r_nobs[i];
+    nob->shadow_mem = rt->cur_nob;
+    nob->g_shadow_mem = rt->g_shadow_mem;
+    rt->cur_nob += nob->len;
+    len_sum += nob->len;
+  }
+//  printf("nob_r size=%d and nob_r count=%d\n",len_sum,rt->r_nobs.size()); 
+  alloc->nob_r = len_sum/(1024*24) + 1;
+
+  int len_sum_r = 0;
+  for (size_t i = 0; i < rt->r_obs.size(); ++i) {
+    ReadObIterator_p ob = rt->r_obs[i];
+    len_sum_r += ob->len;
+    ob->g_shadow_mem = rt->g_shadow_mem;
+  }
+//  printf("ob_r size=%d and ob_r count=%d\n",len_sum_r,rt->r_obs.size()); 
+ 
+  len_sum = 0;
+  for (size_t i = 0; i < rt->w_obs.size(); ++i) {
+    WriteObIterator_p ob = rt->w_obs[i];
+    ob->g_shadow_mem = rt->g_shadow_mem;
+    len_sum += ob->len;
+  }
+//  printf("ob_w size=%d and ob_w count=%d\n",len_sum,rt->w_obs.size()); 
+
+  if (len_sum!=0 || len_sum_r!=0) {
+  alloc->ob_w = 1;
+  alloc->ob_r = 1; //tttodo more sophisticated policy to preset $sets for ob_r
+  for (size_t i = 0; i < rt->r_obs.size(); ++i) {
+    ReadObIterator_p ob = rt->r_obs[i];
+    ob->shadow_mem = rt->cur_ob;
+    rt->cur_ob += ((alloc->ob_r)*ACTIVE_SET_SIZE)/rt->r_obs.size();
+  }}
+
+  for (size_t i = 0; i < rt->w_obs.size(); ++i) {
+    WriteObIterator_p ob = rt->w_obs[i];
+    ob->shadow_mem = rt->cur_ob_rw;
+    rt->cur_ob_rw += ((alloc->ob_w)*ACTIVE_SET_SIZE)/rt->w_obs.size();
+  }
+
+  for (size_t i = 0; i < rt->nobs.size(); ++i) {
+    NobArray_p nob = rt->nobs[i];
+    int inob = nob->shadow_mem;
+    for (int i = 0; i < nob->len; i++) {
+      rt->g_shadow_mem[cal_nob(inob + i,nob->alloc)] = nob->data[i];
+    }
+  }
+
+  for (size_t i = 0; i < rt->r_nobs.size(); ++i) {
+    ReadNobArray_p nob = rt->r_nobs[i];
+    int inob = nob->shadow_mem;
+    for (int i = 0; i < nob->len; i++) {
+      rt->g_shadow_mem[cal_read_nob(inob + i,nob->alloc)] = nob->data[i];
+    }
+  }
+
+  begin_tx(rt);
+}
+#else
 void begin_leaky_sec(CMO_p rt)
 {
   printf("start begin_leaky\n");
@@ -219,7 +308,6 @@ void begin_leaky_sec(CMO_p rt)
   if (len_sum > available_llc || alloc->nob_w > available_set) abort_message("nob_w size\n"); 
   available_set -= alloc->nob_w; 
   available_llc -= len_sum;
-
 
   len_sum = 0;
   for (size_t i = 0; i < rt->r_nobs.size(); ++i) {
@@ -266,8 +354,6 @@ void begin_leaky_sec(CMO_p rt)
     rt->cur_ob_rw += ((alloc->ob_w)*ACTIVE_SET_SIZE)/rt->w_obs.size();
   }
 
-  
-
   for (size_t i = 0; i < rt->nobs.size(); ++i) {
     NobArray_p nob = rt->nobs[i];
     int inob = nob->shadow_mem;
@@ -285,6 +371,7 @@ void begin_leaky_sec(CMO_p rt)
   }
   begin_tx(rt);
 }
+#endif
 #endif
 
 #if DUMMY
@@ -501,13 +588,41 @@ int32_t nob_read_at(const ReadNobArray_p nob, int32_t addr)
   return res;
 }
 #else
+bool check_cache_full()
+{
+}
 int32_t nob_read_at(const NobArray_p nob, int32_t addr)
 {
-  return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)];
+#if PFO
+    uint64_t vm_addr =(uint64_t)nob->g_shadow_mem + cal_nob(nob->shadow_mem + addr,nob->alloc)*sizeof(int32_t);
+    uint32_t set_idx = (vm_addr >> 6) % 64;
+    if(++(nob->rt->l1counts->counts[set_idx]) > L1_WAYS){
+        end_tx(nob->rt);
+        begin_tx(nob->rt);
+        return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)];
+    } else {
+        return *(int32_t*)vm_addr;
+    }
+#else
+    return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)];
+#endif
 }
+
 void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
 {
-  nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)] = data;
+#if PFO
+    uint64_t vm_addr = (uint64_t)nob->g_shadow_mem + cal_nob(nob->shadow_mem + addr,nob->alloc)*sizeof(int32_t);
+    uint32_t set_idx = (vm_addr >> 6) % 64;
+    if(++(nob->rt->l1counts->counts[set_idx]) > L1_WAYS){
+        end_tx(nob->rt);
+        begin_tx(nob->rt);
+        nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)] = data;
+    } else {
+        *(int32_t*)vm_addr = data;
+    }
+#else
+    nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)] = data;
+#endif
 }
 
 int32_t nob_read_at(const ReadNobArray_p nob, int32_t addr)
