@@ -4,10 +4,20 @@
 #include <stdint.h>
 #include <vector>
 
+#define PFO 1
+#define L1_WAYS 8
+#define L1_SETS 64
+
 struct ReadObIterator;
 struct WriteObIterator;
 struct NobArray;
 struct ReadNobArray;
+#if PFO
+struct L1 {
+   char counts[L1_SETS];
+};
+typedef struct L1* L1_p;
+#endif
 
 struct CMO {
   std::vector<struct ReadObIterator*> r_obs;
@@ -19,6 +29,9 @@ struct CMO {
   int32_t cur_ob;
   int32_t cur_ob_rw;
   int32_t cur_nob;
+#if PFO
+  L1_p l1counts;
+#endif
 };
 
 typedef struct CMO CMO_t;
