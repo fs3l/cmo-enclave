@@ -30,6 +30,23 @@ int32_t max_write_ob_shadow_mem_size(CMO_p rt, WriteObIterator_p ob);
 extern "C" {
 void cmo_tx_abort(int code);
 }
+#if PFO
+//return 0 if set_number contains tag, otherwise returns current #distinct tag in one set 
+int32_t check_tag(uint32_t set_number, uint16_t tag,uint32_t *g_mem) {
+  uint32_t idx = set_number * 4;
+  idx = (idx/48)*1024 + idx%48 +16;
+  uint16_t* set_member =  (uint16_t*)&g_mem[idx];
+  for(int i=0;i<8;i++) {
+    if (set_member[i] == tag) return 0;
+    if (set_member[i] == 0) {
+      set_member[i] = tag; 
+      return i+1;
+    }
+  }
+  return 9;
+}
+#endif
+
 #if OLD_ALLOC
 int32_t cal_ob(int32_t offset, ALLOC_p alloc)
 {
@@ -200,19 +217,9 @@ void begin_leaky_sec(CMO_p rt)
 #if PFO
 void begin_leaky_sec(CMO_p rt)
 {
-  rt->l1counts = (L1_p)(&rt->g_shadow_mem[rt->meta_pos]);
-  for(int ii=0;ii<L1_SETS;ii++) rt->l1counts->counts[ii]=0;
-//L1_SETS has to be 64, as a cacheline is 64 bytes.
-//printf("size %d\n", sizeof(*rt->l1counts));
-#if OLD_ALLOC
-  rt->meta_pos += 1024;
-#else
-  rt->meta_pos += 16;
-#endif
-
 //  printf("start begin_leaky\n");
   ALLOC_p alloc = (ALLOC_p)(&rt->g_shadow_mem[1024*6]);
-  alloc->meta = 1;
+  alloc->meta = 4;
   int32_t len_sum = 0;
   for (size_t i = 0; i < rt->nobs.size(); ++i) {
     NobArray_p nob = rt->nobs[i];
@@ -475,7 +482,7 @@ void begin_tx(CMO_p rt)
       "add $4, %%rcx\n\t"
       "jmp loop_ep_%=\n\t"
       "endloop_ep_%=:\n\t"
-      "xbegin begin_abort_handler_%=\n\t"
+      //"xbegin begin_abort_handler_%=\n\t"
       "mov $0, %%eax\n\t"
       "mov %%rdi, %%rcx\n\t"
       "loop_ip_%=:\n\t"
@@ -493,7 +500,7 @@ void begin_tx(CMO_p rt)
 
 void end_tx(CMO_p rt)
 {
-  __asm__("xend\n\t");
+  //__asm__("xend\n\t");
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem_pos += ob->iter_pos;
@@ -596,7 +603,8 @@ int32_t nob_read_at(const NobArray_p nob, int32_t addr)
 #if PFO
     uint64_t vm_addr =(uint64_t)nob->g_shadow_mem + cal_nob(nob->shadow_mem + addr,nob->alloc)*sizeof(int32_t);
     uint32_t set_idx = (vm_addr >> 6) % 64;
-    if(++(nob->rt->l1counts->counts[set_idx]) > L1_WAYS){
+    uint16_t tag = (vm_addr>>12) & 0xffff;
+    if(check_tag(set_idx,tag,nob->g_shadow_mem) > L1_WAYS){
         end_tx(nob->rt);
         begin_tx(nob->rt);
         return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)];
@@ -613,7 +621,8 @@ void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
 #if PFO
     uint64_t vm_addr = (uint64_t)nob->g_shadow_mem + cal_nob(nob->shadow_mem + addr,nob->alloc)*sizeof(int32_t);
     uint32_t set_idx = (vm_addr >> 6) % 64;
-    if(++(nob->rt->l1counts->counts[set_idx]) > L1_WAYS){
+    uint16_t tag = (vm_addr>>12) & 0xffff;
+    if(check_tag(set_idx,tag,nob->g_shadow_mem) > L1_WAYS){
         end_tx(nob->rt);
         begin_tx(nob->rt);
         nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)] = data;
