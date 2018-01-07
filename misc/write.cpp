@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <stdio.h>
 unsigned char g_shadow_mem[80000] __attribute__((aligned(4096)));
-unsigned char g_noise_mem[80000] __attribute__((aligned(4096)));
+unsigned char g_interfere_mem[80000] __attribute__((aligned(4096)));
 extern "C" {
   void tx_abort() {
     printf("abort!\n");
@@ -22,16 +22,17 @@ void end_tx() {
 }
 
 int main() {
-  g_shadow_mem[0] = 1;
-  g_shadow_mem[4096] = 1;
-  //  for(int i=0;i<9216;i++)
-  //  g_shadow_mem1[i] = i;
+  for(int i=0;i<16;i++)
+    g_shadow_mem[i*4096] = 5;
   begin_tx();
-  for(int i=0;i<8192;i++)
-    g_shadow_mem[i] = 5;
+  for(int i=0;i<8;i++)
+    g_shadow_mem[i*4096] = 5;
+  end_tx();
+  begin_tx();
+  for(int i=8;i<16;i++)
+    g_shadow_mem[i*4096] = 5;
   end_tx();
   printf("%d\n",g_shadow_mem[1000]);
-  printf("%d\n",g_noise_mem[0]);
   return 0;
 }
 

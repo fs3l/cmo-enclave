@@ -1,0 +1,4 @@
+1, abort reasons
+- Conflict
+- Write-set
+- Page-fault
