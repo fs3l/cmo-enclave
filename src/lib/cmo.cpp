@@ -248,8 +248,8 @@ void begin_leaky_sec(CMO_p rt)
   }
   //  printf("nob_w size=%d and nob_w count=%d\n",len_sum,rt->nobs.size()); 
 
-  alloc->nob_w = len_sum/ACTIVE_SET_SIZE + 1;
-
+  //alloc->nob_w = len_sum/ACTIVE_SET_SIZE + 1;
+  alloc->nob_w = 40;
   len_sum = 0;
   for (size_t i = 0; i < rt->r_nobs.size(); ++i) {
     ReadNobArray_p nob = rt->r_nobs[i];
@@ -469,7 +469,8 @@ void begin_tx(CMO_p rt)
       "jmp end_abort_handler_%=\n\t"
       "begin_abort_handler_%=:\n\t"
       "end_abort_handler_%=:\n\t"
-      "xbegin begin_abort_handler_%=\n\t":::);
+      "xbegin begin_abort_handler_%=\n\t"
+:::);
 }
 
 #else
