@@ -19,12 +19,13 @@ struct L1 {
 typedef struct L1* L1_p;
 #endif
 
+extern uint32_t shadow_mem[2 * 1024 * 1024] __attribute__((aligned(4096)));
 struct CMO {
   std::vector<struct ReadObIterator*> r_obs;
   std::vector<struct WriteObIterator*> w_obs;
   std::vector<struct NobArray*> nobs;
   std::vector<struct ReadNobArray*> r_nobs;
-  uint32_t g_shadow_mem[2 * 1024 * 1024] __attribute__((aligned(4096)));
+  uint32_t* g_shadow_mem;
   int32_t meta_pos;
   int32_t cur_ob;
   int32_t cur_ob_rw;

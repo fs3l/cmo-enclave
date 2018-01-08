@@ -17,6 +17,7 @@
 #define META_SET 1
 #define OB_RW_SIZE ACTIVE_SET_SIZE * 6
 #define OB_R_SIZE ACTIVE_SET_SIZE * 6
+uint32_t shadow_mem[2 * 1024 * 1024] __attribute__((aligned(4096)));
 // private functions
 void begin_tx(CMO_p rt);
 void end_tx(CMO_p rt);
@@ -28,14 +29,19 @@ int32_t max_read_ob_shadow_mem_size(CMO_p rt, ReadObIterator_p ob);
 int32_t max_write_ob_shadow_mem_size(CMO_p rt, WriteObIterator_p ob);
 
 extern "C" {
-void cmo_tx_abort(int code);
+  void cmo_tx_abort(int code);
 }
 #if PFO
+uint16_t sets[64*8];
 //return 0 if set_number contains tag, otherwise returns current #distinct tag in one set 
 int32_t check_tag(uint32_t set_number, uint16_t tag,uint32_t *g_mem) {
   uint32_t idx = set_number * 4;
   idx = (idx/48)*1024 + idx%48 +16;
-  uint16_t* set_member =  (uint16_t*)&g_mem[idx];
+  //uint16_t* set_member =  (uint16_t*)&g_mem[idx];
+  uint16_t* set_member =  (uint16_t*)&sets[set_number*8];
+  //for(int i=0;i<8;i++)
+  //  printf("%d,",set_member[i]);
+  //printf("\n and tag=%d\n",tag);
   for(int i=0;i<8;i++) {
     if (set_member[i] == tag) return 0;
     if (set_member[i] == 0) {
@@ -44,6 +50,18 @@ int32_t check_tag(uint32_t set_number, uint16_t tag,uint32_t *g_mem) {
     }
   }
   return 9;
+}
+
+void clear_tag(uint32_t* g_mem) {
+  int idx = 0;
+  void* set_member;
+  for(int i=0;i<64;i++) {
+    i = i*4;
+    idx = (i/48)*1024+i%48 + 16;
+    //set_member = (void*)&g_mem[idx];
+    set_member = (void*)&sets[i*8];
+    memset(set_member,0,16);
+  }
 }
 #endif
 
@@ -74,7 +92,7 @@ int32_t cal_nob(int32_t offset) { return offset + META_SIZE+OB_R_SIZE+OB_RW_SIZE
 int32_t cal_read_nob(int32_t offset) { return offset + META_SIZE; }
 #endif
 
-CMO_p init_cmo_runtime() { return new CMO_t; }
+CMO_p init_cmo_runtime() { CMO_p a = new CMO_t; a->g_shadow_mem = shadow_mem; return a; }
 #if DUMMY
 void free_cmo_runtime(CMO_p rt) {delete rt;}
 #else
@@ -96,7 +114,7 @@ void cmo_abort(CMO_p rt, const char *abort_msg)
 }
 #if DUMMY
 ReadObIterator_p init_read_ob_iterator(CMO_p rt, const int32_t *data,
-                                       int32_t len)
+    int32_t len)
 {
   ReadObIterator_p ob = new ReadObIterator_t;
   ob->rt = rt;
@@ -107,7 +125,7 @@ ReadObIterator_p init_read_ob_iterator(CMO_p rt, const int32_t *data,
 }
 #else
 ReadObIterator_p init_read_ob_iterator(CMO_p rt, const int32_t *data,
-                                       int32_t len)
+    int32_t len)
 {
   ReadObIterator_p ob = (ReadObIterator_p)(&rt->g_shadow_mem[rt->meta_pos]);
   ob->rt = rt;
@@ -217,7 +235,7 @@ void begin_leaky_sec(CMO_p rt)
 #if PFO
 void begin_leaky_sec(CMO_p rt)
 {
-//  printf("start begin_leaky\n");
+    //printf("start begin_leaky and g_shadow_mem=%lx\n",rt->g_shadow_mem);
   ALLOC_p alloc = (ALLOC_p)(&rt->g_shadow_mem[1024*6]);
   alloc->meta = 4;
   int32_t len_sum = 0;
@@ -228,7 +246,7 @@ void begin_leaky_sec(CMO_p rt)
     rt->cur_nob += nob->len;
     len_sum += nob->len;
   }
-//  printf("nob_w size=%d and nob_w count=%d\n",len_sum,rt->nobs.size()); 
+  //  printf("nob_w size=%d and nob_w count=%d\n",len_sum,rt->nobs.size()); 
 
   alloc->nob_w = len_sum/ACTIVE_SET_SIZE + 1;
 
@@ -240,33 +258,33 @@ void begin_leaky_sec(CMO_p rt)
     rt->cur_nob += nob->len;
     len_sum += nob->len;
   }
-//  printf("nob_r size=%d and nob_r count=%d\n",len_sum,rt->r_nobs.size()); 
+  //  printf("nob_r size=%d and nob_r count=%d\n",len_sum,rt->r_nobs.size()); 
   alloc->nob_r = len_sum/(1024*24) + 1;
-
+  //printf("nob_w=%d,nob_r=%d,ob_w=%d,ob_r=%d\n",alloc->nob_w,alloc->nob_r,alloc->ob_w,alloc->ob_r);
   int len_sum_r = 0;
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     len_sum_r += ob->len;
     ob->g_shadow_mem = rt->g_shadow_mem;
   }
-//  printf("ob_r size=%d and ob_r count=%d\n",len_sum_r,rt->r_obs.size()); 
- 
+  //  printf("ob_r size=%d and ob_r count=%d\n",len_sum_r,rt->r_obs.size()); 
+
   len_sum = 0;
   for (size_t i = 0; i < rt->w_obs.size(); ++i) {
     WriteObIterator_p ob = rt->w_obs[i];
     ob->g_shadow_mem = rt->g_shadow_mem;
     len_sum += ob->len;
   }
-//  printf("ob_w size=%d and ob_w count=%d\n",len_sum,rt->w_obs.size()); 
+  //  printf("ob_w size=%d and ob_w count=%d\n",len_sum,rt->w_obs.size()); 
 
   if (len_sum!=0 || len_sum_r!=0) {
-  alloc->ob_w = 1;
-  alloc->ob_r = 1; //tttodo more sophisticated policy to preset $sets for ob_r
-  for (size_t i = 0; i < rt->r_obs.size(); ++i) {
-    ReadObIterator_p ob = rt->r_obs[i];
-    ob->shadow_mem = rt->cur_ob;
-    rt->cur_ob += ((alloc->ob_r)*ACTIVE_SET_SIZE)/rt->r_obs.size();
-  }}
+    alloc->ob_w = 1;
+    alloc->ob_r = 1; //tttodo more sophisticated policy to preset $sets for ob_r
+    for (size_t i = 0; i < rt->r_obs.size(); ++i) {
+      ReadObIterator_p ob = rt->r_obs[i];
+      ob->shadow_mem = rt->cur_ob;
+      rt->cur_ob += ((alloc->ob_r)*ACTIVE_SET_SIZE)/rt->r_obs.size();
+    }}
 
   for (size_t i = 0; i < rt->w_obs.size(); ++i) {
     WriteObIterator_p ob = rt->w_obs[i];
@@ -337,7 +355,7 @@ void begin_leaky_sec(CMO_p rt)
     ob->g_shadow_mem = rt->g_shadow_mem;
   }
   printf("ob_r size=%d and ob_r count=%d\n",len_sum_r,rt->r_obs.size()); 
- 
+
   len_sum = 0;
   for (size_t i = 0; i < rt->w_obs.size(); ++i) {
     WriteObIterator_p ob = rt->w_obs[i];
@@ -347,13 +365,13 @@ void begin_leaky_sec(CMO_p rt)
   printf("ob_w size=%d and ob_w count=%d\n",len_sum,rt->w_obs.size()); 
 
   if (len_sum!=0 || len_sum_r!=0) {
-  alloc->ob_w = (available_set)*(len_sum)/(len_sum+len_sum_r);
-  alloc->ob_r = available_set -= alloc->ob_w;
-  for (size_t i = 0; i < rt->r_obs.size(); ++i) {
-    ReadObIterator_p ob = rt->r_obs[i];
-    ob->shadow_mem = rt->cur_ob;
-    rt->cur_ob += ((alloc->ob_r)*ACTIVE_SET_SIZE)/rt->r_obs.size();
-  }}
+    alloc->ob_w = (available_set)*(len_sum)/(len_sum+len_sum_r);
+    alloc->ob_r = available_set -= alloc->ob_w;
+    for (size_t i = 0; i < rt->r_obs.size(); ++i) {
+      ReadObIterator_p ob = rt->r_obs[i];
+      ob->shadow_mem = rt->cur_ob;
+      rt->cur_ob += ((alloc->ob_r)*ACTIVE_SET_SIZE)/rt->r_obs.size();
+    }}
 
   for (size_t i = 0; i < rt->w_obs.size(); ++i) {
     WriteObIterator_p ob = rt->w_obs[i];
@@ -452,50 +470,50 @@ void begin_tx(CMO_p rt)
       "begin_abort_handler_%=:\n\t"
       "mov %%eax, %%edi\n\t"
       /*"push %%rax\n\t"
-      "push %%rcx\n\t"
-      "push %%rdx\n\t"
-      "push %%rsi\n\t"
-      "push %%rdi\n\t"
-      "push %%r8\n\t"
-      "push %%r9\n\t"
-      "push %%r10\n\t"
-      "push %%r11\n\t"
-      "call cmo_tx_abort\n\t"
-      "pop %%r11\n\t"
-      "pop %%r10\n\t"
-      "pop %%r9\n\t"
-      "pop %%r8\n\t"
-      "pop %%rdi\n\t"
-      "pop %%rsi\n\t"
-      "pop %%rdx\n\t"
-      "pop %%rcx\n\t"
-      "pop %%rax\n\t"*/
-      "end_abort_handler_%=:\n\t"
-      "mov %0, %%rdi\n\t"
-      "mov $0, %%eax\n\t"
-      "mov %%rdi, %%rcx\n\t"
-      "loop_ep_%=:\n\t"
-      "cmpl $4200, %%eax\n\t"
-      "jge endloop_ep_%=\n\t"
-      "movl (%%rcx), %%r11d\n\t"
-      "addl $1, %%eax\n\t"
-      "add $4, %%rcx\n\t"
-      "jmp loop_ep_%=\n\t"
-      "endloop_ep_%=:\n\t"
-      //"xbegin begin_abort_handler_%=\n\t"
-      "mov $0, %%eax\n\t"
-      "mov %%rdi, %%rcx\n\t"
-      "loop_ip_%=:\n\t"
-      "cmpl $4200, %%eax\n\t"
-      "jge endloop_ip_%=\n\t"
-      "movl (%%rcx), %%r11d\n\t"
-      "addl $1, %%eax\n\t"
-      "add $4, %%rcx\n\t"
-      "jmp loop_ip_%=\n\t"
-      "endloop_ip_%=:\n\t"
-      : /* no output */
-      : "r"(rt->g_shadow_mem)
-      : "%rdi", "%eax");
+        "push %%rcx\n\t"
+        "push %%rdx\n\t"
+        "push %%rsi\n\t"
+        "push %%rdi\n\t"
+        "push %%r8\n\t"
+        "push %%r9\n\t"
+        "push %%r10\n\t"
+        "push %%r11\n\t"
+        "call cmo_tx_abort\n\t"
+        "pop %%r11\n\t"
+        "pop %%r10\n\t"
+        "pop %%r9\n\t"
+        "pop %%r8\n\t"
+        "pop %%rdi\n\t"
+        "pop %%rsi\n\t"
+        "pop %%rdx\n\t"
+        "pop %%rcx\n\t"
+        "pop %%rax\n\t"*/
+    "end_abort_handler_%=:\n\t"
+    "mov %0, %%rdi\n\t"
+    "mov $0, %%eax\n\t"
+    "mov %%rdi, %%rcx\n\t"
+    "loop_ep_%=:\n\t"
+    "cmpl $4200, %%eax\n\t"
+    "jge endloop_ep_%=\n\t"
+    "movl (%%rcx), %%r11d\n\t"
+    "addl $1, %%eax\n\t"
+    "add $4, %%rcx\n\t"
+    "jmp loop_ep_%=\n\t"
+    "endloop_ep_%=:\n\t"
+    //"xbegin begin_abort_handler_%=\n\t"
+    "mov $0, %%eax\n\t"
+    "mov %%rdi, %%rcx\n\t"
+    "loop_ip_%=:\n\t"
+    "cmpl $4200, %%eax\n\t"
+    "jge endloop_ip_%=\n\t"
+    "movl (%%rcx), %%r11d\n\t"
+    "addl $1, %%eax\n\t"
+    "add $4, %%rcx\n\t"
+    "jmp loop_ip_%=\n\t"
+    "endloop_ip_%=:\n\t"
+    : /* no output */
+    : "r"(rt->g_shadow_mem)
+    : "%rdi", "%eax");
 }
 
 void end_tx(CMO_p rt)
@@ -516,6 +534,7 @@ void end_tx(CMO_p rt)
     ob->shadow_mem_pos += ob->iter_pos;
     ob->shadow_mem_len = 0;
   }
+  clear_tag(rt->g_shadow_mem);
 }
 
 #if DUMMY
@@ -572,16 +591,16 @@ int32_t nob_read_at(const NobArray_p nob, int32_t addr)
 {
   int res = 0;
   for (int i=0;i<nob->len;i++) {
-       bool cond = (addr == i);
-       cmove_int32(cond,&nob->data[addr],&res);
+    bool cond = (addr == i);
+    cmove_int32(cond,&nob->data[addr],&res);
   }
   return res;
 }
 void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
 {
   for (int i=0;i<nob->len;i++) {
-       bool cond = (addr == i);
-       cmove_int32(cond,&data,&nob->data[addr]);
+    bool cond = (addr == i);
+    cmove_int32(cond,&data,&nob->data[addr]);
   }
 }
 
@@ -589,8 +608,8 @@ int32_t nob_read_at(const ReadNobArray_p nob, int32_t addr)
 {
   int res = 0;
   for (int i=0;i<nob->len;i++) {
-       bool cond = (addr == i);
-       cmove_int32(cond,&nob->data[addr],&res);
+    bool cond = (addr == i);
+    cmove_int32(cond,&nob->data[addr],&res);
   }
   return res;
 }
@@ -598,39 +617,57 @@ int32_t nob_read_at(const ReadNobArray_p nob, int32_t addr)
 bool check_cache_full()
 {
 }
+uint32_t minset = 100;
+uint32_t maxset = 0;
 int32_t nob_read_at(const NobArray_p nob, int32_t addr)
 {
 #if PFO
-    uint64_t vm_addr =(uint64_t)nob->g_shadow_mem + cal_nob(nob->shadow_mem + addr,nob->alloc)*sizeof(int32_t);
-    uint32_t set_idx = (vm_addr >> 6) % 64;
-    uint16_t tag = (vm_addr>>12) & 0xffff;
-    if(check_tag(set_idx,tag,nob->g_shadow_mem) > L1_WAYS){
-        end_tx(nob->rt);
-        begin_tx(nob->rt);
-        return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)];
-    } else {
-        return *(int32_t*)vm_addr;
-    }
-#else
+  uint64_t vm_addr =(uint64_t)nob->g_shadow_mem + cal_nob(nob->shadow_mem + addr,nob->alloc)*sizeof(int32_t);
+  uint32_t set_idx = (vm_addr >> 6) & 0x3f;
+  uint16_t tag = (vm_addr>>12) & 0xffff;
+  int32_t res = 0;
+  if (set_idx<minset) minset = set_idx;
+  if (set_idx>maxset) maxset = set_idx;
+  //printf("nob_read_at g_shadowm_mem=%lx,set_idx=%d, minset=%d, and maxset=%d, and cal_nob=%d and vm_addr=%lx\n",nob->g_shadow_mem,set_idx,minset,maxset,cal_nob(nob->shadow_mem+addr,nob->alloc),vm_addr);
+  res = check_tag(set_idx,tag,nob->g_shadow_mem);
+  //if (set_idx==32)
+  //printf("calling check_tag with set=%d, tag=%d, and res=%d\n",set_idx,tag,res);
+  if(res > L1_WAYS){
+  //  printf("nob partition\n");
+    end_tx(nob->rt);
+    begin_tx(nob->rt);
     return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)];
+  } else {
+    return *(int32_t*)vm_addr;
+  }
+#else
+  return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)];
 #endif
 }
 
 void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
 {
 #if PFO
-    uint64_t vm_addr = (uint64_t)nob->g_shadow_mem + cal_nob(nob->shadow_mem + addr,nob->alloc)*sizeof(int32_t);
-    uint32_t set_idx = (vm_addr >> 6) % 64;
-    uint16_t tag = (vm_addr>>12) & 0xffff;
-    if(check_tag(set_idx,tag,nob->g_shadow_mem) > L1_WAYS){
-        end_tx(nob->rt);
-        begin_tx(nob->rt);
-        nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)] = data;
-    } else {
-        *(int32_t*)vm_addr = data;
-    }
-#else
+  uint64_t vm_addr = (uint64_t)nob->g_shadow_mem + cal_nob(nob->shadow_mem + addr,nob->alloc)*sizeof(int32_t);
+  uint32_t set_idx = (vm_addr >> 6) & 0x3f;
+  uint16_t tag = (vm_addr>>12) & 0xffff;
+  uint32_t res = 0;
+  if (set_idx<minset) minset = set_idx;
+  if (set_idx>maxset) maxset = set_idx;
+  //printf("nob_write_at set_idx=%d, minset=%d, and maxset=%d, and cal_nob=%d and vm_addr=%lx\n",set_idx,minset,maxset,cal_nob(nob->shadow_mem+addr,nob->alloc),vm_addr);
+  res = check_tag(set_idx,tag,nob->g_shadow_mem);
+  //if (set_idx==32)
+  //printf("calling check_tag with set=%d, tag=%d, and res=%d\n",set_idx,tag,res);
+  if(res > L1_WAYS){
+   // printf("nob partition\n");
+    end_tx(nob->rt);
+    begin_tx(nob->rt);
     nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)] = data;
+  } else {
+    *(int32_t*)vm_addr = data;
+  }
+#else
+  nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)] = data;
 #endif
 }
 
