@@ -35,19 +35,19 @@ extern "C" {
 uint16_t sets[64*8];
 //return 0 if set_number contains tag, otherwise returns current #distinct tag in one set 
 int32_t check_tag(uint32_t set_number, uint16_t tag,uint32_t *g_mem) {
-   uint32_t idx = set_number * 4;
-   idx = (idx/48)*1024 + idx%48 +16;
-   uint16_t* set_member =  (uint16_t*)&g_mem[idx];
+  uint32_t idx = set_number * 4;
+  idx = (idx/48)*1024 + idx%48 +16;
+  uint16_t* set_member =  (uint16_t*)&g_mem[idx];
   //uint16_t* set_member =  (uint16_t*)&sets[set_number*8];
   //for(int i=0;i<8;i++)
   //  printf("%d,",set_member[i]);
   //printf("\n and tag=%d\n",tag);
-   for(int i=0;i<8;i++) {
-     if (set_member[i] == tag) return 0;
-     if (set_member[i] == 0) {
+  for(int i=0;i<8;i++) {
+    if (set_member[i] == tag) return 0;
+    if (set_member[i] == 0) {
       set_member[i] = tag; 
       return i+1;
-   }
+    }
   }
   return 9;
 }
@@ -58,7 +58,7 @@ void clear_tag(uint32_t* g_mem) {
   for(int i=0;i<64;i++) {
     i = i*4;
     idx = (i/48)*1024+i%48 + 16;
-      set_member = (void*)&g_mem[idx];
+    set_member = (void*)&g_mem[idx];
     //set_member = (void*)&sets[i*8];
     memset(set_member,0,16);
   }
@@ -440,7 +440,39 @@ int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
   return min((int)((ob->alloc->ob_w*ACTIVE_SET_SIZE)/(_rt->w_obs.size())), ob->len - ob->shadow_mem_pos);
 }
 #endif
+#if PFO
+void begin_tx(CMO_p rt)
+{
+  for (size_t i = 0; i < rt->r_obs.size(); ++i) {
+    ReadObIterator_p ob = rt->r_obs[i];
+    ob->shadow_mem_len = max_read_ob_shadow_mem_size(rt, ob);
+    ob->iter_pos = 0;
+    int iob = ob->shadow_mem;
 
+    // TODO REMOVE memory copy here!!!
+    for (int i = 0; i < ob->shadow_mem_len; i++) {
+      rt->g_shadow_mem[cal_ob(iob + i,ob->alloc)] = ob->data[ob->shadow_mem_pos + i];
+    }
+  }
+
+  for (size_t i = 0; i < rt->w_obs.size(); ++i) {
+    WriteObIterator_p ob = rt->w_obs[i];
+    ob->shadow_mem_len = max_write_ob_shadow_mem_size(rt, ob);
+    ob->iter_pos = 0;
+    int iob = ob->shadow_mem;
+    for (int i = 0; i < ob->shadow_mem_len; i++) {
+      rt->g_shadow_mem[cal_ob_rw(iob + i,ob->alloc)] = ob->data[ob->shadow_mem_pos + i];
+    }
+  }
+
+  __asm__(
+      "jmp end_abort_handler_%=\n\t"
+      "begin_abort_handler_%=:\n\t"
+      "end_abort_handler_%=:\n\t"
+      "xbegin begin_abort_handler_%=\n\t":::);
+}
+
+#else
 void begin_tx(CMO_p rt)
 {
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
@@ -493,7 +525,7 @@ void begin_tx(CMO_p rt)
     "mov $0, %%eax\n\t"
     "mov %%rdi, %%rcx\n\t"
     "loop_ep_%=:\n\t"
-    "cmpl $4200, %%eax\n\t"
+    "cmpl $0, %%eax\n\t"
     "jge endloop_ep_%=\n\t"
     "movl (%%rcx), %%r11d\n\t"
     "addl $1, %%eax\n\t"
@@ -504,7 +536,7 @@ void begin_tx(CMO_p rt)
     "mov $0, %%eax\n\t"
     "mov %%rdi, %%rcx\n\t"
     "loop_ip_%=:\n\t"
-    "cmpl $4200, %%eax\n\t"
+    "cmpl $0, %%eax\n\t"
     "jge endloop_ip_%=\n\t"
     "movl (%%rcx), %%r11d\n\t"
     "addl $1, %%eax\n\t"
@@ -515,7 +547,7 @@ void begin_tx(CMO_p rt)
     : "r"(rt->g_shadow_mem)
     : "%rdi", "%eax");
 }
-
+#endif
 void end_tx(CMO_p rt)
 {
   __asm__("xend\n\t");
@@ -652,8 +684,8 @@ void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
   uint32_t set_idx = (vm_addr >> 6) & 0x3f;
   uint16_t tag = (vm_addr>>12) & 0xffff;
   uint32_t res = 0;
- // if (set_idx<minset) minset = set_idx;
- // if (set_idx>maxset) maxset = set_idx;
+  // if (set_idx<minset) minset = set_idx;
+  // if (set_idx>maxset) maxset = set_idx;
   //printf("nob_write_at set_idx=%d, minset=%d, and maxset=%d, and cal_nob=%d and vm_addr=%lx\n",set_idx,minset,maxset,cal_nob(nob->shadow_mem+addr,nob->alloc),vm_addr);
   res = check_tag(set_idx,tag,nob->g_shadow_mem);
   //if (set_idx==32)
