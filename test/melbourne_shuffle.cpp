@@ -10,8 +10,8 @@
 
 BOOST_AUTO_TEST_CASE(melbourne_shuffle_test)
 {
-  int32_t len = 32768;
-  //int32_t len = 4394304;
+  //int32_t len = 2197152;
+  int32_t len = 4394304;
   //int32_t len = 100;
   int32_t* input = gen_random_sequence(len);
   int32_t* output = new int32_t[len];

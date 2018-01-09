@@ -441,30 +441,9 @@ int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 }
 #endif
 #if PFO
-void begin_tx(CMO_p rt)
+void begin_tx_pfo(CMO_p rt)
 {
-  for (size_t i = 0; i < rt->r_obs.size(); ++i) {
-    ReadObIterator_p ob = rt->r_obs[i];
-    ob->shadow_mem_len = max_read_ob_shadow_mem_size(rt, ob);
-    ob->iter_pos = 0;
-    int iob = ob->shadow_mem;
-
-    // TODO REMOVE memory copy here!!!
-    for (int i = 0; i < ob->shadow_mem_len; i++) {
-      rt->g_shadow_mem[cal_ob(iob + i,ob->alloc)] = ob->data[ob->shadow_mem_pos + i];
-    }
-  }
-
-  for (size_t i = 0; i < rt->w_obs.size(); ++i) {
-    WriteObIterator_p ob = rt->w_obs[i];
-    ob->shadow_mem_len = max_write_ob_shadow_mem_size(rt, ob);
-    ob->iter_pos = 0;
-    int iob = ob->shadow_mem;
-    for (int i = 0; i < ob->shadow_mem_len; i++) {
-      rt->g_shadow_mem[cal_ob_rw(iob + i,ob->alloc)] = ob->data[ob->shadow_mem_pos + i];
-    }
-  }
-
+  
   __asm__(
       "jmp end_abort_handler_%=\n\t"
       "begin_abort_handler_%=:\n\t"
@@ -472,8 +451,7 @@ void begin_tx(CMO_p rt)
       "xbegin begin_abort_handler_%=\n\t"
 :::);
 }
-
-#else
+#endif
 void begin_tx(CMO_p rt)
 {
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
@@ -547,6 +525,11 @@ void begin_tx(CMO_p rt)
     : /* no output */
     : "r"(rt->g_shadow_mem)
     : "%rdi", "%eax");
+}
+#if PFO
+void end_tx_pfo(CMO_p rt) {
+  __asm__("xend\n\t");
+  clear_tag(rt->g_shadow_mem);
 }
 #endif
 void end_tx(CMO_p rt)
@@ -667,8 +650,8 @@ int32_t nob_read_at(const NobArray_p nob, int32_t addr)
   //printf("calling check_tag with set=%d, tag=%d, and res=%d\n",set_idx,tag,res);
   if(res > L1_WAYS){
     //printf("nob partition\n");
-    end_tx(nob->rt);
-    begin_tx(nob->rt);
+    end_tx_pfo(nob->rt);
+    begin_tx_pfo(nob->rt);
     return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)];
   } else {
     return *(int32_t*)vm_addr;
@@ -693,8 +676,8 @@ void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
   //printf("calling check_tag with set=%d, tag=%d, and res=%d\n",set_idx,tag,res);
   if(res > L1_WAYS){
     //   printf("nob partition\n");
-    end_tx(nob->rt);
-    begin_tx(nob->rt);
+    end_tx_pfo(nob->rt);
+    begin_tx_pfo(nob->rt);
     nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)] = data;
   } else {
     *(int32_t*)vm_addr = data;
