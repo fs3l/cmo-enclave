@@ -6,59 +6,113 @@
 #include "utils.h"
 #include <stdio.h>
 
-struct kvpair {
-  int32_t key;
-  int32_t value;
-  kvpair* next;
-};
-typedef struct kvpair  kvpair_t;
-typedef struct kvpair* kvpair_p;
+//mapreduce rt
+kvpair_p interm_first=0,interm_last=0;
 
-void map(int32_t key, int32_t value){
-}
+kvpair_p reducer0_in_first=0,reducer0_in_last=0;
+kvpair_p reducer1_in_first=0,reducer1_in_last=0;
 
-void reduce(int32_t key2, kvpair_p value2s, int32_t len){
-}
-
-void shuffle(kvpair_p interm, kvpair_p interm2,int32_t m){}
-
-kvpair_p interm,interm2;
-void mapreduce_rt(kvpair_p input_sorted, int32_t n, void (*map)(int32_t,int32_t), void (*reduce)(int32_t,kvpair_p,int32_t)){
-    for(int32_t i=0; i<n; i++){
-        map(input_sorted[i].key,input_sorted[i].value);
+void emit_interm(kvpair_p kvp){
+    if(interm_first == 0){
+        interm_first = kvp;
+        interm_last = kvp;
+    } else {
+        interm_last->next = kvp;
+        interm_last = kvp;
     }
-    int32_t m;
-    shuffle(interm,interm2,m);
+}
+
+void emit(kvpair_p kvp){
+    printf("output emit: <%d,%d>\n", kvp->key,kvp->value);
+}
+
+void mapper(kvpair_p input_pt, int32_t pt_size, void (*map)(int32_t,int32_t)){
+    for(int32_t i=0; i<pt_size; i++){
+        map(input_pt[i].key,input_pt[i].value);
+    }
+    for(kvpair_p it = interm_first; it != interm_last; it = it->next){
+        it->r = it->key % 2; //TODO
+    }
+}
+
+void reducer(kvpair_p pt, int32_t pt_size, void (*reduce)(int32_t,kvpair_p,int32_t)){
+    if (pt == 0) return;
     int32_t init=0,end=0;
-    for(; end<m; end++){
-        if(interm2[end].key != interm2[end].key){
-            reduce(interm2[init].key,interm2+init,end-init);
+    for(; end<pt_size; end++){
+        if(pt[end].key != pt[end].key){
+            reduce(pt[init].key,pt+init,end-init);
             init=end;
         }  
     }
-    reduce(interm2[init].key,interm2+init,end-init);
+    reduce(pt[init].key,pt+init,end-init);
+}
+
+/**
+two mappers, two reducers
+*/
+void mapreduce_rt(kvpair_p input_sorted, int32_t n, void (*map)(int32_t,int32_t), void (*reduce)(int32_t,kvpair_p,int32_t)){
+    mapper(input_sorted, n/2, map);
+    mapper(input_sorted + n/2, n/2 + n%2, map);
+
+//mr-shuffle
+    for(kvpair_p it = interm_first; it != interm_last; it = it->next){
+        kvpair_p reducer0_in_first,reducer0_in_last;
+        if(it->r == 0){
+            if(reducer0_in_first == 0){
+                reducer0_in_first = it;
+                reducer0_in_last = it;
+            } else {
+                reducer0_in_last->next = it;
+                reducer0_in_last = it;
+            }
+        } else {
+            if(reducer1_in_first == 0){
+                reducer1_in_first = it;
+                reducer1_in_last = it;
+            } else {
+                reducer1_in_last->next = it;
+                reducer1_in_last = it;
+           }
+        }
+    }
+
+    reducer(reducer0_in_first, reducer0_in_last - reducer0_in_first, reduce);
+    reducer(reducer1_in_first, reducer1_in_last - reducer1_in_first, reduce);
+}
+
+//mapreduce udf
+
+void map_wc(int32_t key1, int32_t value1){
+    kvpair_p kvp1=new kvpair_t;
+    kvp1->key=value1%4;
+    kvp1->value=1;
+    emit_interm(kvp1);
+
+    value1>>=2;
+    kvpair_p kvp2=new kvpair_t;
+    kvp2->key=value1%4;
+    kvp2->value=1;
+    emit_interm(kvp2);
+
+    value1>>=2;
+    kvpair_p kvp3=new kvpair_t;
+    kvp3->key=value1%4;
+    kvp3->value=1;
+    emit_interm(kvp3);
+}
+
+void reduce_wc(int32_t key2, kvpair_p value2s, int32_t len){
+    int32_t result = 0;
+    for(int32_t i=0; i<len; i++){
+        result += value2s[i].value;
+    }
+    kvpair_p kvp=new kvpair_t;
+    kvp->key=key2;
+    kvp->value=result;
+    emit(kvp);
 }
 
 ///TODO
-
-void wordcnt_mr(int32_t* input, int32_t* output, int32_t len)
-{
-  CMO_p rt = init_cmo_runtime();
-  NobArray_p nob = init_nob_array(rt, output, 26);
-  ReadObIterator_p  ob = init_read_ob_iterator(rt, input,len);
-  begin_leaky_sec(rt);
-  int32_t addr = 0;
-  int32_t v = 0;
-  for(int i=0;i<len;i++) {
-    addr = ob_read_next(ob);
-    v = nob_read_at(nob,addr);
-    v++;
-    nob_write_at(nob,addr,v);
-  } 
-  end_leaky_sec(rt);
-  free_cmo_runtime(rt);
-}
-
 
 /**
 static int64_t _kmeans_distance(int32_t x1, int32_t y1, int32_t x2, int32_t y2)

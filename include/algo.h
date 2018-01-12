@@ -35,6 +35,19 @@ void element_count(const int32_t* arr_in, int32_t len, int32_t uniq_elememts,
 void kmeans(const int32_t* x_in, const int32_t* y_in, int32_t len, int32_t k,
             int32_t* result);
 
+struct kvpair {
+  int32_t key;
+  int32_t value;
+  kvpair* next;
+  int32_t r;
+};
+typedef struct kvpair  kvpair_t;
+typedef struct kvpair* kvpair_p;
+
+void mapreduce_rt(kvpair_p input_sorted, int32_t n, void (*map)(int32_t,int32_t), void (*reduce)(int32_t,kvpair_p,int32_t));
+void map_wc(int32_t key1, int32_t value1);
+void reduce_wc(int32_t key2, kvpair_p value2s, int32_t len);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
