@@ -448,7 +448,7 @@ void begin_tx_pfo(CMO_p rt)
       "jmp end_abort_handler_%=\n\t"
       "begin_abort_handler_%=:\n\t"
       "end_abort_handler_%=:\n\t"
-      "xbegin begin_abort_handler_%=\n\t"
+     //"xbegin begin_abort_handler_%=\n\t"
 :::);
 }
 #endif
@@ -511,7 +511,7 @@ void begin_tx(CMO_p rt)
     "add $4, %%rcx\n\t"
     "jmp loop_ep_%=\n\t"
     "endloop_ep_%=:\n\t"
-    "xbegin begin_abort_handler_%=\n\t"
+    //"xbegin begin_abort_handler_%=\n\t"
     "mov $0, %%eax\n\t"
     "mov %%rdi, %%rcx\n\t"
     "loop_ip_%=:\n\t"
@@ -528,13 +528,13 @@ void begin_tx(CMO_p rt)
 }
 #if PFO
 void end_tx_pfo(CMO_p rt) {
-  __asm__("xend\n\t");
+  //__asm__("xend\n\t");
   clear_tag(rt->g_shadow_mem);
 }
 #endif
 void end_tx(CMO_p rt)
 {
-  __asm__("xend\n\t");
+  //__asm__("xend\n\t");
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem_pos += ob->iter_pos;
@@ -652,9 +652,10 @@ int32_t nob_read_at(const NobArray_p nob, int32_t addr)
     //printf("nob partition\n");
     end_tx_pfo(nob->rt);
     begin_tx_pfo(nob->rt);
+    check_tag(set_idx,tag,nob->g_shadow_mem);
     return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)];
   } else {
-    return *(int32_t*)vm_addr;
+    return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)];
   }
 #else
   return nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)];
@@ -678,9 +679,10 @@ void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
     //   printf("nob partition\n");
     end_tx_pfo(nob->rt);
     begin_tx_pfo(nob->rt);
+    check_tag(set_idx,tag,nob->g_shadow_mem);
     nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)] = data;
   } else {
-    *(int32_t*)vm_addr = data;
+    nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)] = data;
   }
 #else
   nob->g_shadow_mem[cal_nob(nob->shadow_mem + addr,nob->alloc)] = data;
