@@ -16,10 +16,10 @@ BOOST_AUTO_TEST_CASE(melbourne_shuffle_test)
  // int32_t len = 262144;
  // int32_t len = 524288;
  // int32_t len = 1048576;
- // int32_t len = 2197152;
+  int32_t len = 2097152;
  // int32_t len = 4194304;
  // int32_t len = 8388608;
-  int32_t len = 16777216;
+ // int32_t len = 16777216;
  // int32_t len = 33554432;
   
   //int32_t len = 100;

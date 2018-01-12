@@ -309,7 +309,7 @@ void begin_leaky_sec(CMO_p rt)
 #else
 void begin_leaky_sec(CMO_p rt)
 {
-  printf("start begin_leaky\n");
+  //printf("start begin_leaky\n");
   int available_set = 64;
   int available_llc = LLC_SIZE;
   available_set--; //for meta
@@ -323,7 +323,7 @@ void begin_leaky_sec(CMO_p rt)
     rt->cur_nob += nob->len;
     len_sum += nob->len;
   }
-  printf("nob_w size=%d and nob_w count=%d\n",len_sum,rt->nobs.size()); 
+  //printf("nob_w size=%d and nob_w count=%d\n",len_sum,rt->nobs.size()); 
 
   alloc->nob_w = len_sum/ACTIVE_SET_SIZE + 1;
   if (len_sum > available_llc || alloc->nob_w > available_set) abort_message("nob_w size\n"); 
@@ -338,7 +338,7 @@ void begin_leaky_sec(CMO_p rt)
     rt->cur_nob += nob->len;
     len_sum += nob->len;
   }
-  printf("nob_r size=%d and nob_r count=%d\n",len_sum,rt->r_nobs.size()); 
+  //printf("nob_r size=%d and nob_r count=%d\n",len_sum,rt->r_nobs.size()); 
   alloc->nob_r = len_sum/(1024*24) + 1;
   if (len_sum > available_llc || alloc->nob_r > available_set) abort_message("nob_r size\n"); 
   available_set -= alloc->nob_r;
@@ -350,7 +350,7 @@ void begin_leaky_sec(CMO_p rt)
     len_sum_r += ob->len;
     ob->g_shadow_mem = rt->g_shadow_mem;
   }
-  printf("ob_r size=%d and ob_r count=%d\n",len_sum_r,rt->r_obs.size()); 
+  //printf("ob_r size=%d and ob_r count=%d\n",len_sum_r,rt->r_obs.size()); 
 
   len_sum = 0;
   for (size_t i = 0; i < rt->w_obs.size(); ++i) {
@@ -358,7 +358,7 @@ void begin_leaky_sec(CMO_p rt)
     ob->g_shadow_mem = rt->g_shadow_mem;
     len_sum += ob->len;
   }
-  printf("ob_w size=%d and ob_w count=%d\n",len_sum,rt->w_obs.size()); 
+  //printf("ob_w size=%d and ob_w count=%d\n",len_sum,rt->w_obs.size()); 
 
   if (len_sum!=0 || len_sum_r!=0) {
     alloc->ob_w = (available_set)*(len_sum)/(len_sum+len_sum_r);
