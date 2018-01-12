@@ -92,7 +92,17 @@ int32_t cal_nob(int32_t offset) { return offset + META_SIZE+OB_R_SIZE+OB_RW_SIZE
 int32_t cal_read_nob(int32_t offset) { return offset + META_SIZE; }
 #endif
 
-CMO_p init_cmo_runtime() { CMO_p a = new CMO_t; a->g_shadow_mem = shadow_mem; for(int i=0;i<2*1024*1024;i++) shadow_mem[i] = 0;return a; }
+CMO_p init_cmo_runtime() { 
+  CMO_p a = new CMO_t; 
+  a->g_shadow_mem = shadow_mem; 
+  a->cur_ob = 0;
+  a->meta_pos = 0;
+  a->cur_ob_rw = 0;
+  a->cur_nob = 0;
+  for(int i=0;i<2*1024*1024;i++) 
+    shadow_mem[i] = 0;
+  return a; 
+}
 #if DUMMY
 void free_cmo_runtime(CMO_p rt) {delete rt;}
 #else
@@ -235,7 +245,6 @@ void begin_leaky_sec(CMO_p rt)
 #if PFO
 void begin_leaky_sec(CMO_p rt)
 {
-  //printf("start begin_leaky and g_shadow_mem=%lx\n",rt->g_shadow_mem);
   ALLOC_p alloc = (ALLOC_p)(&rt->g_shadow_mem[1024*6]);
   alloc->meta = 4;
   int32_t len_sum = 0;
@@ -261,34 +270,21 @@ void begin_leaky_sec(CMO_p rt)
   //  printf("nob_r size=%d and nob_r count=%d\n",len_sum,rt->r_nobs.size()); 
   alloc->nob_r = len_sum/(1024*24) + 1;
   //printf("nob_w=%d,nob_r=%d,ob_w=%d,ob_r=%d\n",alloc->nob_w,alloc->nob_r,alloc->ob_w,alloc->ob_r);
-  int len_sum_r = 0;
-  for (size_t i = 0; i < rt->r_obs.size(); ++i) {
-    ReadObIterator_p ob = rt->r_obs[i];
-    len_sum_r += ob->len;
-    ob->g_shadow_mem = rt->g_shadow_mem;
-  }
-  //  printf("ob_r size=%d and ob_r count=%d\n",len_sum_r,rt->r_obs.size()); 
-
-  len_sum = 0;
-  for (size_t i = 0; i < rt->w_obs.size(); ++i) {
-    WriteObIterator_p ob = rt->w_obs[i];
-    ob->g_shadow_mem = rt->g_shadow_mem;
-    len_sum += ob->len;
-  }
   //  printf("ob_w size=%d and ob_w count=%d\n",len_sum,rt->w_obs.size()); 
 
-  if (len_sum!=0 || len_sum_r!=0) {
-    alloc->ob_w = 1;
-    alloc->ob_r = 1; //tttodo more sophisticated policy to preset $sets for ob_r
-    for (size_t i = 0; i < rt->r_obs.size(); ++i) {
-      ReadObIterator_p ob = rt->r_obs[i];
-      ob->shadow_mem = rt->cur_ob;
-      rt->cur_ob += ((alloc->ob_r)*ACTIVE_SET_SIZE)/rt->r_obs.size();
-    }}
+  alloc->ob_w = 1;
+  alloc->ob_r = 1; //tttodo more sophisticated policy to preset $sets for ob_r
+  for (size_t i = 0; i < rt->r_obs.size(); ++i) {
+    ReadObIterator_p ob = rt->r_obs[i];
+    ob->shadow_mem = rt->cur_ob;
+    ob->g_shadow_mem = rt->g_shadow_mem;
+    rt->cur_ob += ((alloc->ob_r)*ACTIVE_SET_SIZE)/rt->r_obs.size();
+  }
 
   for (size_t i = 0; i < rt->w_obs.size(); ++i) {
     WriteObIterator_p ob = rt->w_obs[i];
     ob->shadow_mem = rt->cur_ob_rw;
+    ob->g_shadow_mem = rt->g_shadow_mem;
     rt->cur_ob_rw += ((alloc->ob_w)*ACTIVE_SET_SIZE)/rt->w_obs.size();
   }
 
@@ -443,13 +439,13 @@ int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 #if PFO
 void begin_tx_pfo(CMO_p rt)
 {
-  
+
   __asm__(
       "jmp end_abort_handler_%=\n\t"
       "begin_abort_handler_%=:\n\t"
       "end_abort_handler_%=:\n\t"
-     //"xbegin begin_abort_handler_%=\n\t"
-:::);
+      "xbegin begin_abort_handler_%=\n\t"
+      :::);
 }
 #endif
 void begin_tx(CMO_p rt)
@@ -459,7 +455,6 @@ void begin_tx(CMO_p rt)
     ob->shadow_mem_len = max_read_ob_shadow_mem_size(rt, ob);
     ob->iter_pos = 0;
     int iob = ob->shadow_mem;
-
     // TODO REMOVE memory copy here!!!
     for (int i = 0; i < ob->shadow_mem_len; i++) {
       rt->g_shadow_mem[cal_ob(iob + i,ob->alloc)] = ob->data[ob->shadow_mem_pos + i];
@@ -511,7 +506,7 @@ void begin_tx(CMO_p rt)
     "add $4, %%rcx\n\t"
     "jmp loop_ep_%=\n\t"
     "endloop_ep_%=:\n\t"
-    //"xbegin begin_abort_handler_%=\n\t"
+    "xbegin begin_abort_handler_%=\n\t"
     "mov $0, %%eax\n\t"
     "mov %%rdi, %%rcx\n\t"
     "loop_ip_%=:\n\t"
@@ -528,13 +523,13 @@ void begin_tx(CMO_p rt)
 }
 #if PFO
 void end_tx_pfo(CMO_p rt) {
-  //__asm__("xend\n\t");
+  __asm__("xend\n\t");
   clear_tag(rt->g_shadow_mem);
 }
 #endif
 void end_tx(CMO_p rt)
 {
-  //__asm__("xend\n\t");
+  __asm__("xend\n\t");
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem_pos += ob->iter_pos;
@@ -550,7 +545,9 @@ void end_tx(CMO_p rt)
     ob->shadow_mem_pos += ob->iter_pos;
     ob->shadow_mem_len = 0;
   }
+#if PFO
   clear_tag(rt->g_shadow_mem);
+#endif
 }
 
 #if DUMMY
