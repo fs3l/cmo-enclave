@@ -2,7 +2,7 @@
 #define ALGO_H
 
 #include <stdint.h>
-
+#include <vector>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -44,9 +44,9 @@ struct kvpair {
 typedef struct kvpair  kvpair_t;
 typedef struct kvpair* kvpair_p;
 
-void mapreduce_rt(kvpair_p input_sorted, int32_t n, void (*map)(int32_t,int32_t), void (*reduce)(int32_t,kvpair_p,int32_t));
+void mapreduce_rt(kvpair_p input_sorted, int32_t n, void (*map)(int32_t,int32_t), void (*reduce)(int32_t,std::vector<int>));
 void map_wc(int32_t key1, int32_t value1);
-void reduce_wc(int32_t key2, kvpair_p value2s, int32_t len);
+void reduce_wc(int32_t key2, std::vector<int>);
 
 #ifdef __cplusplus
 }

@@ -5,7 +5,8 @@
 #include "cmo_array.h"
 #include "utils.h"
 #include <stdio.h>
-
+#include <map>
+#include <vector>
 //mapreduce rt
 kvpair_p interm_first=0,interm_last=0;
 
@@ -13,7 +14,6 @@ kvpair_p reducer0_in_first=0,reducer0_in_last=0;
 kvpair_p reducer1_in_first=0,reducer1_in_last=0;
 
 void emit_interm(kvpair_p kvp){
-  printf("emit interm_list it->key=%d,it->value=%d\n",kvp->key,kvp->value);
   if(interm_first == 0){
     interm_first = kvp;
     interm_last = kvp;
@@ -33,20 +33,37 @@ void mapper(kvpair_p input_pt, int32_t pt_size, void (*map)(int32_t,int32_t)){
   }
 }
 
-void reducer(kvpair_p start, kvpair_p end, void (*reduce)(int32_t,kvpair_p,int32_t)){
-  //  for(kvpair_p it=start; it!=end; it=it->next){
-  //    if(pt[end].key != pt[end].key){
-  //      reduce(pt[init].key,pt+init,end-init);
-  //      init=end;
-  //    }  
-  //  }
-  //  reduce(pt[init].key,pt+init,end-init);
+void reducer(kvpair_p start, kvpair_p end, void (*reduce)(int32_t,std::vector<int>)){
+  std::map<int,std::vector<int>> table;
+  for(kvpair_p it=start; it!=end; it=it->next){
+    if(table.find(it->key) != table.end()) {
+      std::vector<int> &v  = table.at(it->key);
+      v.push_back(it->value);
+    } else {
+      std::vector<int> v;
+      v.push_back(it->value);
+      table.emplace(it->key,v);
+    }
+  }
+  if(table.find(end->key) != table.end()) {
+    std::vector<int> &v  = table.at(end->key);
+    v.push_back(end->value);
+  } else {
+    std::vector<int> v;
+    v.push_back(end->value);
+    table.emplace(end->key,v);
+  }
+
+  for (std::map<int,std::vector<int>>::iterator it = table.begin();it!=table.end();it++) {
+    std::vector<int> &v = it->second;
+    reduce(it->first,it->second);
+  }
 }
 
 /**
   two mappers, two reducers
  */
-void mapreduce_rt(kvpair_p input_sorted, int32_t n, void (*map)(int32_t,int32_t), void (*reduce)(int32_t,kvpair_p,int32_t)){
+void mapreduce_rt(kvpair_p input_sorted, int32_t n, void (*map)(int32_t,int32_t), void (*reduce)(int32_t,std::vector<int>)){
   mapper(input_sorted, n/2, map);
   mapper(input_sorted + n/2, n/2 + n%2, map);
   for(kvpair_p it = interm_first; it != interm_last; it = it->next){
@@ -56,12 +73,10 @@ void mapreduce_rt(kvpair_p input_sorted, int32_t n, void (*map)(int32_t,int32_t)
 
   //mr-shuffle
   for(kvpair_p it = interm_first; it != interm_last; it = it->next){
-    // printf("processing interm_list it->key=%d,it->value=%d\n",it->key,it->value);
     kvpair_p it1 = new kvpair_t;
     it1->key = it->key;
     it1->value = it->value;
     if(it->r == 0){
-      printf("inserting recuder 0 it1->key=%d,it1->value=%d\n",it1->key,it1->value);
       if(reducer0_in_first == 0){
         reducer0_in_first = it1;
         reducer0_in_last = it1;
@@ -70,7 +85,6 @@ void mapreduce_rt(kvpair_p input_sorted, int32_t n, void (*map)(int32_t,int32_t)
         reducer0_in_last = it1;
       }
     } else {
-      printf("inserting recuder 1 it1->key=%d,it1->value=%d\n",it1->key,it1->value);
       if(reducer1_in_first == 0){
         reducer1_in_first = it1;
         reducer1_in_last = it1;
@@ -84,7 +98,6 @@ void mapreduce_rt(kvpair_p input_sorted, int32_t n, void (*map)(int32_t,int32_t)
   it1->key = interm_last->key;
   it1->value = interm_last->value;
   if(interm_last->r == 0){
-    printf("inserting recuder 0 it1->key=%d,it1->value=%d\n",it1->key,it1->value);
     if(reducer0_in_first == 0){
       reducer0_in_first = it1;
       reducer0_in_last = it1;
@@ -93,7 +106,6 @@ void mapreduce_rt(kvpair_p input_sorted, int32_t n, void (*map)(int32_t,int32_t)
       reducer0_in_last = it1;
     }
   } else {
-    printf("inserting recuder 1 it1->key=%d,it1->value=%d\n",it1->key,it1->value);
     if(reducer1_in_first == 0){
       reducer1_in_first = it1;
       reducer1_in_last = it1;
@@ -102,19 +114,8 @@ void mapreduce_rt(kvpair_p input_sorted, int32_t n, void (*map)(int32_t,int32_t)
       reducer1_in_last = it1;
     }
   }
-
-
-  for(kvpair_p it = reducer0_in_first; it != reducer0_in_last; it = it->next){
-    printf("processing reducer0_list it->key=%d,it->value=%d\n",it->key,it->value);
-  }
-  printf("processing reducer0_list it->key=%d,it->value=%d\n",reducer0_in_last->key,reducer0_in_last->value);
-  for(kvpair_p it = reducer1_in_first; it != reducer1_in_last; it = it->next){
-    printf("processing reducer1_list it->key=%d,it->value=%d\n",it->key,it->value);
-  }
-  printf("processing reducer1_list it->key=%d,it->value=%d\n",reducer1_in_last->key,reducer1_in_last->value);
-
-
-  reducer(reducer0_in_first, reducer1_in_last,reduce);
+  
+  reducer(reducer0_in_first, reducer0_in_last,reduce);
   reducer(reducer1_in_first, reducer1_in_last,reduce);
 }
 
@@ -139,10 +140,10 @@ void map_wc(int32_t key1, int32_t value1){
   emit_interm(kvp3);
 }
 
-void reduce_wc(int32_t key2, kvpair_p value2s, int32_t len){
+void reduce_wc(int32_t key2, std::vector<int> values){
   int32_t result = 0;
-  for(int32_t i=0; i<len; i++){
-    result += value2s[i].value;
+  for(int32_t a:values){
+    result += a;
   }
   kvpair_p kvp=new kvpair_t;
   kvp->key=key2;
