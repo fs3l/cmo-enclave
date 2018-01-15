@@ -23,8 +23,8 @@ void emit_interm(kvpair_p kvp){
   }
 }
 
-void emit(kvpair_p kvp){
-  printf("output emit: <%d,%d>\n", kvp->key,kvp->value);
+void emit(kvpair_p kvp,std::map<int,int> &output){
+  output.emplace(kvp->key,kvp->value);
 }
 
 void mapper(kvpair_p input_pt, int32_t pt_size, void (*map)(int32_t,int32_t)){
@@ -33,7 +33,7 @@ void mapper(kvpair_p input_pt, int32_t pt_size, void (*map)(int32_t,int32_t)){
   }
 }
 
-void reducer(kvpair_p start, kvpair_p end, void (*reduce)(int32_t,std::vector<int>)){
+void reducer(kvpair_p start, kvpair_p end, void (*reduce)(int32_t,std::vector<int>,std::map<int,int> &output),std::map<int,int> &output){
   std::map<int,std::vector<int>> table;
   for(kvpair_p it=start; it!=end; it=it->next){
     if(table.find(it->key) != table.end()) {
@@ -56,14 +56,14 @@ void reducer(kvpair_p start, kvpair_p end, void (*reduce)(int32_t,std::vector<in
 
   for (std::map<int,std::vector<int>>::iterator it = table.begin();it!=table.end();it++) {
     std::vector<int> &v = it->second;
-    reduce(it->first,it->second);
+    reduce(it->first,it->second,output);
   }
 }
 
 /**
   two mappers, two reducers
  */
-void mapreduce_rt(kvpair_p input_sorted, int32_t n, void (*map)(int32_t,int32_t), void (*reduce)(int32_t,std::vector<int>)){
+void mapreduce_rt(kvpair_p input_sorted,  int n, void (*map)(int32_t,int32_t), void (*reduce)(int32_t,std::vector<int>,std::map<int,int>&), std::map<int,int> &output){
   mapper(input_sorted, n/2, map);
   mapper(input_sorted + n/2, n/2 + n%2, map);
   for(kvpair_p it = interm_first; it != interm_last; it = it->next){
@@ -114,9 +114,8 @@ void mapreduce_rt(kvpair_p input_sorted, int32_t n, void (*map)(int32_t,int32_t)
       reducer1_in_last = it1;
     }
   }
-  
-  reducer(reducer0_in_first, reducer0_in_last,reduce);
-  reducer(reducer1_in_first, reducer1_in_last,reduce);
+  reducer(reducer0_in_first, reducer0_in_last,reduce,output);
+  reducer(reducer1_in_first, reducer1_in_last,reduce,output);
 }
 
 //mapreduce udf
@@ -140,7 +139,7 @@ void map_wc(int32_t key1, int32_t value1){
   emit_interm(kvp3);
 }
 
-void reduce_wc(int32_t key2, std::vector<int> values){
+void reduce_wc(int32_t key2, std::vector<int> values,std::map<int,int> &output){
   int32_t result = 0;
   for(int32_t a:values){
     result += a;
@@ -148,7 +147,7 @@ void reduce_wc(int32_t key2, std::vector<int> values){
   kvpair_p kvp=new kvpair_t;
   kvp->key=key2;
   kvp->value=result;
-  emit(kvp);
+  emit(kvp,output);
 }
 
 ///TODO

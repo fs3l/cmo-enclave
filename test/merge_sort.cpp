@@ -25,7 +25,7 @@ BOOST_AUTO_TEST_CASE(merge_sort_test)
 #ifdef SGX_APP
   ecall_merge_sort(global_eid, input, output, len, 4);
 #else
-  merge_sort(input, output, len, 4);
+  merge_sort(input, output, len, 8);
 #endif
   gettimeofday(&end,NULL);
   printf("time spent=%ld\n",1000000*(end.tv_sec-begin.tv_sec)+end.tv_usec-begin.tv_usec);
