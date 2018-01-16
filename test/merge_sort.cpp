@@ -15,9 +15,9 @@ BOOST_AUTO_TEST_CASE(merge_sort_test)
 //  int32_t len = 524288;
 //  int32_t len = 1048576;
 //  int32_t len = 2197152;
-//  int32_t len = 4194304;
+  int32_t len = 4194304;
 //  int32_t len = 8388608;
-  int32_t len = 16777216;
+//  int32_t len = 16777216;
   int32_t* input = gen_random_sequence(len);
   int32_t* output = new int32_t[len];
   struct timeval begin,end;
@@ -25,7 +25,7 @@ BOOST_AUTO_TEST_CASE(merge_sort_test)
 #ifdef SGX_APP
   ecall_merge_sort(global_eid, input, output, len, 4);
 #else
-  merge_sort(input, output, len, 4);
+  merge_sort(input, output, len, 8);
 #endif
   gettimeofday(&end,NULL);
   printf("time spent=%ld\n",1000000*(end.tv_sec-begin.tv_sec)+end.tv_usec-begin.tv_usec);
