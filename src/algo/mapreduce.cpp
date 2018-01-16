@@ -40,7 +40,6 @@ void reducer(std::vector<kvpair_t> input, void (*reduce)(int32_t,std::vector<int
   }
   
   for (std::map<int,std::vector<int>>::iterator it = table.begin();it!=table.end();it++) {
-    std::vector<int> &v = it->second;
     reduce(it->first,it->second,output);
   }
 }
@@ -54,14 +53,18 @@ void mapreduce_rt(std::vector<kvpair_t> input_sorted,  int n, void (*map)(int32_
 
   int32_t interm_size = interm.size();
   int32_t* keys_to_shuffle = new int32_t[interm_size];
+  int32_t* vals_to_shuffle = new int32_t[interm_size];
   int32_t* keys_to_shuffled = new int32_t[interm_size];
+  int32_t* vals_to_shuffled = new int32_t[interm_size];
   int32_t* perm = gen_random_sequence(interm_size);
   for(int i=0;i<interm_size;i++) keys_to_shuffle[i] = interm[i].key;
+  for(int i=0;i<interm_size;i++) vals_to_shuffle[i] = interm[i].value;
   melbourne_shuffle(keys_to_shuffle,perm,keys_to_shuffled,interm_size,1);
+  melbourne_shuffle(vals_to_shuffle,perm,vals_to_shuffled,interm_size,1);
   for(int i=0;i<interm_size;i++) {
     kvpair_p kv = new kvpair_t;
     kv->key = keys_to_shuffled[i];
-    kv->value = 1;
+    kv->value = vals_to_shuffled[i];
     interm_shuffled.push_back(*kv);
   }
   //mr-shuffle
