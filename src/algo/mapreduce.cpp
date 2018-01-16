@@ -8,7 +8,7 @@
 #include <map>
 #include <vector>
 
-#define MR_SECURE 0
+#define MR_SECURE 1
 
 //mapreduce rt
 std::vector<kvpair_t> interm; 
