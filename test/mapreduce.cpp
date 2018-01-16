@@ -12,7 +12,7 @@ BOOST_AUTO_TEST_CASE(mapreduce_test)
 {
    kvpair_p input_sorted = new kvpair_t[4];
    input_sorted[0].key = 11;
-   input_sorted[0].value = 70;
+   input_sorted[0].value = 70; //string1=2; string2=1; string3=0;
    input_sorted[1].key = 13;
    input_sorted[1].value = 88;
    input_sorted[2].key = 15;
