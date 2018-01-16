@@ -9,6 +9,7 @@
 #include <vector>
 //mapreduce rt
 std::vector<kvpair_t> interm; 
+std::vector<kvpair_t> interm_shuffled; 
 std::vector<kvpair_t> reducer0_in; 
 std::vector<kvpair_t> reducer1_in; 
 void emit_interm(kvpair_t kv){
@@ -51,8 +52,20 @@ void mapreduce_rt(std::vector<kvpair_t> input_sorted,  int n, void (*map)(int32_
   mapper(input_sorted, 0,n/2, map);
   mapper(input_sorted, n/2, n/2 + n%2, map);
 
+  int32_t interm_size = interm.size();
+  int32_t* keys_to_shuffle = new int32_t[interm_size];
+  int32_t* keys_to_shuffled = new int32_t[interm_size];
+  int32_t* perm = gen_random_sequence(interm_size);
+  for(int i=0;i<interm_size;i++) keys_to_shuffle[i] = interm[i].key;
+  melbourne_shuffle(keys_to_shuffle,perm,keys_to_shuffled,interm_size,1);
+  for(int i=0;i<interm_size;i++) {
+    kvpair_p kv = new kvpair_t;
+    kv->key = keys_to_shuffled[i];
+    kv->value = 1;
+    interm_shuffled.push_back(*kv);
+  }
   //mr-shuffle
-  for(kvpair_t kv : interm){
+  for(kvpair_t kv : interm_shuffled){
     kvpair_p it1 = new kvpair_t;
     it1->key = kv.key;
     it1->value = kv.value;
