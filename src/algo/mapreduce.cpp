@@ -69,8 +69,8 @@ void mapreduce_rt(std::vector<kvpair_t> input_sorted,  int n, void (*map)(int32_
     kvpair_p it1 = new kvpair_t;
     it1->key = kv.key;
     it1->value = kv.value;
-    if(kv.r == 0){
-      reducer1_in.push_back(*it1); 
+    if(kv.key%2== 0){
+      reducer0_in.push_back(*it1); 
     } else {
       reducer1_in.push_back(*it1); 
     }
