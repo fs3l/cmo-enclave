@@ -7,6 +7,9 @@
 #include <stdio.h>
 #include <map>
 #include <vector>
+
+#define MR_SECURE 1
+
 //mapreduce rt
 std::vector<kvpair_t> interm; 
 std::vector<kvpair_t> interm_shuffled; 
@@ -26,8 +29,14 @@ void mapper(std::vector<kvpair_t> input_pt, int32_t start, int32_t pt_size, void
   }
 }
 
+<<<<<<< HEAD
 void reducer(std::vector<kvpair_t> input, void (*reduce)(int32_t,std::vector<std::vector<int>>,std::map<int,std::vector<int>> &output),std::map<int,std::vector<int>> &output){
   std::map<int,std::vector<std::vector<int>>> table;
+=======
+void reducer(std::vector<kvpair_t> input, void (*reduce)(int32_t,std::vector<int>,std::map<int,int> &output),std::map<int,int> &output){
+
+  std::map<int,std::vector<int>> table;
+>>>>>>> 53e0509de5163c186d04f1472b05ffdda95ab672
   for(kvpair_t kv:input){
     if(table.find(kv.key) != table.end()) {
       std::vector<std::vector<int>> &v  = table.at(kv.key);
@@ -51,6 +60,8 @@ void mapreduce_rt(std::vector<kvpair_t> input_sorted,  int n, void (*map)(int32_
   mapper(input_sorted, 0,n/2, map);
   mapper(input_sorted, n/2, n/2 + n%2, map);
 
+#if MR_SECURE 
+
   int32_t interm_size = interm.size();
   int32_t* keys_to_shuffle = new int32_t[interm_size];
   int32_t* vals_to_shuffle = new int32_t[interm_size];
@@ -67,6 +78,7 @@ void mapreduce_rt(std::vector<kvpair_t> input_sorted,  int n, void (*map)(int32_
     kv->value.push_back(vals_to_shuffled[i]);
     interm_shuffled.push_back(*kv);
   }
+
   //mr-shuffle
   for(kvpair_t kv : interm_shuffled){
     kvpair_p it1 = new kvpair_t;
@@ -78,6 +90,20 @@ void mapreduce_rt(std::vector<kvpair_t> input_sorted,  int n, void (*map)(int32_
       reducer1_in.push_back(*it1); 
     }
   }
+#else
+  //mr-shuffle
+  for(kvpair_t kv : interm){
+    kvpair_p it1 = new kvpair_t;
+    it1->key = kv.key;
+    it1->value = kv.value;
+    if(kv.key%2== 0){
+      reducer0_in.push_back(*it1); 
+    } else {
+      reducer1_in.push_back(*it1); 
+    }
+  }
+#endif
+
   reducer(reducer0_in,reduce,output);
   reducer(reducer1_in,reduce,output);
 }
