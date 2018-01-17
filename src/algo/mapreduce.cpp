@@ -29,14 +29,8 @@ void mapper(std::vector<kvpair_t> input_pt, int32_t start, int32_t pt_size, void
   }
 }
 
-<<<<<<< HEAD
 void reducer(std::vector<kvpair_t> input, void (*reduce)(int32_t,std::vector<std::vector<int>>,std::map<int,std::vector<int>> &output),std::map<int,std::vector<int>> &output){
   std::map<int,std::vector<std::vector<int>>> table;
-=======
-void reducer(std::vector<kvpair_t> input, void (*reduce)(int32_t,std::vector<int>,std::map<int,int> &output),std::map<int,int> &output){
-
-  std::map<int,std::vector<int>> table;
->>>>>>> 53e0509de5163c186d04f1472b05ffdda95ab672
   for(kvpair_t kv:input){
     if(table.find(kv.key) != table.end()) {
       std::vector<std::vector<int>> &v  = table.at(kv.key);
