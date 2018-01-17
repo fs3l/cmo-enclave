@@ -11,18 +11,17 @@
 BOOST_AUTO_TEST_CASE(mapreduce_test)
 {
   std::vector<kvpair_t> input_sorted(4);
-  std::map<int,int> output;
+  std::map<int,std::vector<int>> output;
   input_sorted[0].key = 11;
-  input_sorted[0].value = 70;
+  input_sorted[0].value.push_back(0);
   input_sorted[1].key = 13;
-  input_sorted[1].value = 88;
+  input_sorted[1].value.push_back(1);
   input_sorted[2].key = 15;
-  input_sorted[2].value = 60;
+  input_sorted[2].value.push_back(2);
   input_sorted[3].key = 18;
-  input_sorted[3].value = 78;
+  input_sorted[3].value.push_back(0);
   mapreduce_rt(input_sorted, 4, map_wc, reduce_wc,output);
-  BOOST_CHECK(output.at(0)==4);
-  BOOST_CHECK(output.at(1)==2);
-  BOOST_CHECK(output.at(2)==3);
-  BOOST_CHECK(output.at(3)==3);
+  BOOST_CHECK(output.at(0)[0]==2);
+  BOOST_CHECK(output.at(1)[0]==1);
+  BOOST_CHECK(output.at(2)[0]==1);
 }
