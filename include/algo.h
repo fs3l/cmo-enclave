@@ -51,6 +51,7 @@ struct kmeans_aux {
   int32_t k;
   int32_t* center_x;
   int32_t* center_y;
+  int32_t* meta_output;
 };
 typedef struct kmeans_aux kmeans_aux_t;
 typedef struct kmeans_aux* kmeans_aux_p;

@@ -25,11 +25,11 @@ void map_kmeans(int32_t key1, std::vector<int32_t> value, void* aux_data){
     cmove_int64(cond, &new_dist, &dist);
     cmove_int32(cond, &j, &id);
   }
-
   kvpair_p kvp=new kvpair_t;
   kvp->key=id;
   kvp->value.push_back(value[0]);
   kvp->value.push_back(value[1]);
+  aux->meta_output[key1] = id;
   emit_interm(*kvp);
 }
 
@@ -89,6 +89,7 @@ void kmeans_mr(const int32_t* x_in, const int32_t* y_in, int32_t len, int32_t k,
 {
   int32_t* center_x = new int32_t[k];
   int32_t* center_y = new int32_t[k];
+  int32_t* meta_output = result;
 
   for (int32_t i = 0; i < k; ++i) {
     center_x[i] = x_in[i];
@@ -98,19 +99,19 @@ void kmeans_mr(const int32_t* x_in, const int32_t* y_in, int32_t len, int32_t k,
   kmeans_aux_p aux = new kmeans_aux_t;
   aux->center_x = center_x;
   aux->center_y = center_y;
+  aux->k = k;
+  aux->meta_output = result;
   std::vector<kvpair_t> input_sorted(len);
   std::map<int,std::vector<int>> output;
   for(int i=0;i<len;i++) {
     input_sorted[i].value.push_back(x_in[i]);
     input_sorted[i].value.push_back(y_in[i]);
+    input_sorted[i].key = i;
   }
   int32_t iteration = 0;
   //while (iteration++ < 100000) {
   mapreduce_rt(input_sorted, len, map_kmeans, reduce_kmeans,output,aux);
-  
-  for (std::map<int,std::vector<int>>::iterator it = output.begin();it!=output.end();it++) {
-    printf("key=%d\n");
-  }
+
   //_kmeans_map(x_in, y_in, len, center_x, center_y, k, result);
   // int32_t* new_center_x = new int32_t[k];
   // int32_t* new_center_y = new int32_t[k];
