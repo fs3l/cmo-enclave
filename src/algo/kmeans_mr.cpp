@@ -136,7 +136,7 @@ void kmeans_mr(const int32_t* x_in, const int32_t* y_in, int32_t len, int32_t k,
       p++;
     }
     for(int i=0;i<k;i++) {
-      printf("new_center_x[%d]=%d,new_center_y[%d]=%d\n",i,new_center_x[i],i,new_center_y[i]);
+     // printf("new_center_x[%d]=%d,new_center_y[%d]=%d\n",i,new_center_x[i],i,new_center_y[i]);
     }
     if (_kmeans_stop(k, center_x, center_y, new_center_x, new_center_y)) {
       delete[] new_center_x;
