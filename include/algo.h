@@ -35,6 +35,8 @@ void element_count(const int32_t* arr_in, int32_t len, int32_t uniq_elememts,
 
 void kmeans(const int32_t* x_in, const int32_t* y_in, int32_t len, int32_t k,
             int32_t* result);
+void kmeans_mr(const int32_t* x_in, const int32_t* y_in, int32_t len, int32_t k,
+            int32_t* result);
 
 struct kvpair {
   int32_t key;
@@ -53,7 +55,7 @@ struct kmeans_aux {
 typedef struct kmeans_aux kmeans_aux_t;
 typedef struct kmeans_aux* kmeans_aux_p;
 
-void mapreduce_rt(std::vector<kvpair_t> input_sorted, int32_t n, void (*map)(int32_t,std::vector<int>, void*), void (*reduce)(int32_t,std::vector<std::vector<int>>,std::map<int,std::vector<int>>&),std::map<int,std::vector<int>> &output);
+void mapreduce_rt(std::vector<kvpair_t> input_sorted, int32_t n, void (*map)(int32_t,std::vector<int>, void*), void (*reduce)(int32_t,std::vector<std::vector<int>>,std::map<int,std::vector<int>>&),std::map<int,std::vector<int>> &output, void* aux);
 void map_wc(int32_t key1, std::vector<int> value1, void* aux);
 void reduce_wc(int32_t key2, std::vector<std::vector<int>> values, std::map<int,std::vector<int>> &output);
 void emit_interm(kvpair_t kv);

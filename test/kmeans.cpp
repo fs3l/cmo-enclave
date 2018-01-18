@@ -10,8 +10,8 @@
 #include <sys/time.h>
 BOOST_AUTO_TEST_CASE(kmeans_test)
 {
-  int32_t len = 2048*2048;
-  int32_t k = 128;
+  int32_t len = 2048;
+  int32_t k = 10;
   int32_t* x_in = new int32_t[len];
   int32_t* y_in = new int32_t[len];
   int32_t* output = new int32_t[len];
@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE(kmeans_test)
 #ifdef SGX_APP
   ecall_kmeans(global_eid, x_in, y_in, len, k, output);
 #else
-  kmeans(x_in, y_in, len, k, output);
+  kmeans_mr(x_in, y_in, len, k, output);
 #endif
   gettimeofday(&end,NULL);
   printf("time spent=%ld\n",1000000*(end.tv_sec-begin.tv_sec)+end.tv_usec-begin.tv_usec);

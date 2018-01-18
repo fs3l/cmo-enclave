@@ -8,7 +8,7 @@
 #include <map>
 #include <vector>
 
-#define MR_SECURE 1
+#define MR_SECURE 0
 
 //mapreduce rt
 std::vector<kvpair_t> interm; 
@@ -23,9 +23,9 @@ void emit(kvpair_p kvp,std::map<int,std::vector<int>> &output){
   output.emplace(kvp->key,kvp->value);
 }
 
-void mapper(std::vector<kvpair_t> input_pt, int32_t start, int32_t pt_size, void (*map)(int32_t,std::vector<int>, void*)){
+void mapper(std::vector<kvpair_t> input_pt, int32_t start, int32_t pt_size, void (*map)(int32_t,std::vector<int>, void*), void* aux){
   for(int32_t i=0; i<pt_size; i++){
-    map(input_pt[start+i].key,input_pt[start+i].value,NULL);
+    map(input_pt[start+i].key,input_pt[start+i].value,aux);
   }
 }
 
@@ -50,9 +50,9 @@ void reducer(std::vector<kvpair_t> input, void (*reduce)(int32_t,std::vector<std
 /**
   two mappers, two reducers
  */
-void mapreduce_rt(std::vector<kvpair_t> input_sorted,  int n, void (*map)(int32_t,std::vector<int>, void*), void (*reduce)(int32_t,std::vector<std::vector<int>>,std::map<int,std::vector<int>>&), std::map<int,std::vector<int>> &output){
-  mapper(input_sorted, 0,n/2, map);
-  mapper(input_sorted, n/2, n/2 + n%2, map);
+void mapreduce_rt(std::vector<kvpair_t> input_sorted,  int n, void (*map)(int32_t,std::vector<int>, void*), void (*reduce)(int32_t,std::vector<std::vector<int>>,std::map<int,std::vector<int>>&), std::map<int,std::vector<int>> &output, void* aux){
+  mapper(input_sorted, 0,n/2, map,aux);
+  mapper(input_sorted, n/2, n/2 + n%2, map, aux);
 
 #if MR_SECURE 
 

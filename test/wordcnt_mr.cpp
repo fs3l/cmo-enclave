@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_CASE(mapreduce_test)
   input_sorted[2].value.push_back(2);
   input_sorted[3].key = 18;
   input_sorted[3].value.push_back(0);
-  mapreduce_rt(input_sorted, 4, map_wc, reduce_wc,output);
+  mapreduce_rt(input_sorted, 4, map_wc, reduce_wc,output,NULL);
   BOOST_CHECK(output.at(0)[0]==2);
   BOOST_CHECK(output.at(1)[0]==1);
   BOOST_CHECK(output.at(2)[0]==1);
