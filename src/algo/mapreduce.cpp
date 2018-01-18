@@ -23,9 +23,9 @@ void emit(kvpair_p kvp,std::map<int,std::vector<int>> &output){
   output.emplace(kvp->key,kvp->value);
 }
 
-void mapper(std::vector<kvpair_t> input_pt, int32_t start, int32_t pt_size, void (*map)(int32_t,std::vector<int>)){
+void mapper(std::vector<kvpair_t> input_pt, int32_t start, int32_t pt_size, void (*map)(int32_t,std::vector<int>, void*)){
   for(int32_t i=0; i<pt_size; i++){
-    map(input_pt[start+i].key,input_pt[start+i].value);
+    map(input_pt[start+i].key,input_pt[start+i].value,NULL);
   }
 }
 
@@ -50,7 +50,7 @@ void reducer(std::vector<kvpair_t> input, void (*reduce)(int32_t,std::vector<std
 /**
   two mappers, two reducers
  */
-void mapreduce_rt(std::vector<kvpair_t> input_sorted,  int n, void (*map)(int32_t,std::vector<int>), void (*reduce)(int32_t,std::vector<std::vector<int>>,std::map<int,std::vector<int>>&), std::map<int,std::vector<int>> &output){
+void mapreduce_rt(std::vector<kvpair_t> input_sorted,  int n, void (*map)(int32_t,std::vector<int>, void*), void (*reduce)(int32_t,std::vector<std::vector<int>>,std::map<int,std::vector<int>>&), std::map<int,std::vector<int>> &output){
   mapper(input_sorted, 0,n/2, map);
   mapper(input_sorted, n/2, n/2 + n%2, map);
 
@@ -102,20 +102,4 @@ void mapreduce_rt(std::vector<kvpair_t> input_sorted,  int n, void (*map)(int32_
   reducer(reducer1_in,reduce,output);
 }
 
-void map_wc(int32_t key1, std::vector<int32_t> value){
-  kvpair_p kvp=new kvpair_t;
-  kvp->key=value[0];
-  kvp->value.push_back(1);
-  emit_interm(*kvp);
-}
 
-void reduce_wc(int32_t key2, std::vector<std::vector<int>> values,std::map<int,std::vector<int>> &output){
-  int32_t result = 0;
-  for(std::vector<int> a:values){
-    result += a[0];
-  }
-  kvpair_p kvp=new kvpair_t;
-  kvp->key=key2;
-  kvp->value.push_back(result);
-  emit(kvp,output);
-}

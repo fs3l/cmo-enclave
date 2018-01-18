@@ -34,6 +34,7 @@ struct kmeans_center {
   int64_t y;
   int32_t count;
 };
+
 typedef struct kmeans_center kmeans_center_t;
 
 static int32_t _kmeans_sort_centers_partition(Array<kmeans_center_t>& centers,

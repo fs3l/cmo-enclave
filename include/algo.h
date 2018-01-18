@@ -45,9 +45,19 @@ struct kvpair {
 typedef struct kvpair  kvpair_t;
 typedef struct kvpair* kvpair_p;
 
-void mapreduce_rt(std::vector<kvpair_t> input_sorted, int32_t n, void (*map)(int32_t,std::vector<int>), void (*reduce)(int32_t,std::vector<std::vector<int>>,std::map<int,std::vector<int>>&),std::map<int,std::vector<int>> &output);
-void map_wc(int32_t key1, std::vector<int> value1);
+struct kmeans_aux {
+  int32_t k;
+  int32_t* center_x;
+  int32_t* center_y;
+};
+typedef struct kmeans_aux kmeans_aux_t;
+typedef struct kmeans_aux* kmeans_aux_p;
+
+void mapreduce_rt(std::vector<kvpair_t> input_sorted, int32_t n, void (*map)(int32_t,std::vector<int>, void*), void (*reduce)(int32_t,std::vector<std::vector<int>>,std::map<int,std::vector<int>>&),std::map<int,std::vector<int>> &output);
+void map_wc(int32_t key1, std::vector<int> value1, void* aux);
 void reduce_wc(int32_t key2, std::vector<std::vector<int>> values, std::map<int,std::vector<int>> &output);
+void emit_interm(kvpair_t kv);
+void emit(kvpair_p kvp,std::map<int,std::vector<int>> &output);
 
 #ifdef __cplusplus
 }
