@@ -3,6 +3,21 @@
 #include <vector>
 #include <map>
 
+static bool _kmeans_stop(int32_t k, const int32_t* center_x,
+    const int32_t* center_y, const int32_t* new_center_x,
+    const int32_t* new_center_y)
+{
+  int32_t result = 0;
+  int32_t changed = 1;
+  for (int32_t i = 0; i < k; ++i) {
+    cmove_int32(center_x[i] != new_center_x[i], &changed, &result);
+    cmove_int32(center_y[i] != new_center_y[i], &changed, &result);
+  }
+
+  return result != changed;
+}
+
+
 static int64_t _kmeans_distance(int32_t x1, int32_t y1, int32_t x2, int32_t y2)
 {
   int64_t delta_x = x1 - x2;
@@ -109,25 +124,31 @@ void kmeans_mr(const int32_t* x_in, const int32_t* y_in, int32_t len, int32_t k,
     input_sorted[i].key = i;
   }
   int32_t iteration = 0;
-  //while (iteration++ < 100000) {
-  mapreduce_rt(input_sorted, len, map_kmeans, reduce_kmeans,output,aux);
+  while (iteration++ < 100) {
+    mapreduce_rt(input_sorted, len, map_kmeans, reduce_kmeans,output,aux);
 
-  //_kmeans_map(x_in, y_in, len, center_x, center_y, k, result);
-  // int32_t* new_center_x = new int32_t[k];
-  // int32_t* new_center_y = new int32_t[k];
-  // _kmeans_reduce(x_in, y_in, result, len, k, new_center_x, new_center_y);
-
-  //  if (_kmeans_stop(k, center_x, center_y, new_center_x, new_center_y)) {
-  //    delete[] new_center_x;
-  //    delete[] new_center_y;
-  //    break;
-  //  } else {
-  //    delete[] center_x;
-  //    delete[] center_y;
-  //    center_x = new_center_x;
-  //    center_y = new_center_y;
-  // }
-  //}
+    int32_t* new_center_x = new int32_t[k];
+    int32_t* new_center_y = new int32_t[k];
+    int p =0;
+    for (std::map<int,std::vector<int>>::iterator it = output.begin();it!=output.end();it++) {
+      new_center_x[p] = it->second[0];
+      new_center_y[p] = it->second[1];
+      p++;
+    }
+    for(int i=0;i<k;i++) {
+      printf("new_center_x[%d]=%d,new_center_y[%d]=%d\n",i,new_center_x[i],i,new_center_y[i]);
+    }
+    if (_kmeans_stop(k, center_x, center_y, new_center_x, new_center_y)) {
+      delete[] new_center_x;
+      delete[] new_center_y;
+      break;
+    } else {
+      delete[] center_x;
+      delete[] center_y;
+      center_x = new_center_x;
+      center_y = new_center_y;
+    }
+  }
   delete[] center_x;
   delete[] center_y;
 }
