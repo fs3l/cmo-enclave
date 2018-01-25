@@ -51,6 +51,10 @@ void reducer(std::vector<kvpair_t> input, void (*reduce)(int32_t,std::vector<std
   two mappers, two reducers
  */
 void mapreduce_rt(std::vector<kvpair_t> input_sorted,  int n, void (*map)(int32_t,std::vector<int>, void*), void (*reduce)(int32_t,std::vector<std::vector<int>>,std::map<int,std::vector<int>>&), std::map<int,std::vector<int>> &output, void* aux){
+  interm.clear(); 
+  interm_shuffled.clear(); 
+  reducer0_in.clear(); 
+  reducer1_in.clear(); 
   mapper(input_sorted, 0,n/2, map,aux);
   mapper(input_sorted, n/2, n/2 + n%2, map, aux);
 
@@ -65,8 +69,6 @@ void mapreduce_rt(std::vector<kvpair_t> input_sorted,  int n, void (*map)(int32_
   for(int i=0;i<interm_size;i++) {
     kvpair_p kv = new kvpair_t;
     kv->key = keys_to_shuffled[i];
-    kv->value.push_back(5);
-    kv->value.push_back(5);
     interm_shuffled.push_back(*kv);
   }
 
@@ -74,14 +76,12 @@ void mapreduce_rt(std::vector<kvpair_t> input_sorted,  int n, void (*map)(int32_
   int32_t* vals_to_shuffled = new int32_t[interm_size];
   for(int p=0;p<interm[0].value.size();p++) {
     for(int i=0;i<interm_size;i++) {
-      //  printf("unshuffled[%d]=%d\n",i,interm[i].value[p]);
         vals_to_shuffle[i] = interm[i].value[p];
     }
     melbourne_shuffle(vals_to_shuffle,perm,vals_to_shuffled,interm_size,1);
     for(int i=0;i<interm_size;i++) {
-    //  printf("going to push %d\n",vals_to_shuffled[i]);
-      kvpair_t kv = interm_shuffled[i];
-      kv.value[p] = vals_to_shuffled[i];
+      kvpair_t& kv = interm_shuffled[i];
+      kv.value.push_back(vals_to_shuffled[i]);
     }
   }
 
@@ -90,7 +90,6 @@ void mapreduce_rt(std::vector<kvpair_t> input_sorted,  int n, void (*map)(int32_
     kvpair_p it1 = new kvpair_t;
     it1->key = kv.key;
     it1->value = kv.value;
-    //printf("kv.value[0]=%d,kv.value[1]=%d\n",kv.value[0],kv.value[1]);
     if(kv.key%2== 0){
       reducer0_in.push_back(*it1); 
     } else {

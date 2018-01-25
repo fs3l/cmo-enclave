@@ -11,9 +11,13 @@
 
 BOOST_AUTO_TEST_CASE(merge_sort_test)
 {
+//  int32_t len = 16384;
+//  int32_t len = 32768;
+  int32_t len = 65536;
+//  int32_t len = 131072;
 //  int32_t len = 262144;
 //  int32_t len = 524288;
-  int32_t len = 1048576;
+//  int32_t len = 1048576;
 //  int32_t len = 2097152;
 //  int32_t len = 4194304;
 //  int32_t len = 8388608;
