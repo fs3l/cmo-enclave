@@ -53,6 +53,16 @@ struct kmeans_aux {
   int32_t* center_y;
   int32_t* meta_output;
 };
+
+struct graph_ve {
+  int32_t src_v;
+  int32_t dst_v;
+  int32_t is_v;
+  int32_t o_links;
+  int32_t data;
+};
+typedef struct graph_ve graph_ve_t;
+typedef struct graph_ve* graph_ve_p;
 typedef struct kmeans_aux kmeans_aux_t;
 typedef struct kmeans_aux* kmeans_aux_p;
 
@@ -61,6 +71,7 @@ void map_wc(int32_t key1, std::vector<int> value1, void* aux);
 void reduce_wc(int32_t key2, std::vector<std::vector<int>> values, std::map<int,std::vector<int>> &output);
 void emit_interm(kvpair_t kv);
 void emit(kvpair_p kvp,std::map<int,std::vector<int>> &output);
+void graphsc(std::vector<graph_ve_t> &graph);
 
 #ifdef __cplusplus
 }
