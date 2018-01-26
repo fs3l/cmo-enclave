@@ -33,16 +33,63 @@ static void _gather(std::vector<graph_ve_t>& graph) {
     else agg=agg+ve.data; 
   }
 }
+
+static void shuffle(std::vector<graph_ve_t>& graph) {
+int32_t interm_size = graph.size();
+  int32_t* field1_to_shuffle = new int32_t[interm_size];
+  int32_t* field2_to_shuffle = new int32_t[interm_size];
+  int32_t* field3_to_shuffle = new int32_t[interm_size];
+  int32_t* field4_to_shuffle = new int32_t[interm_size];
+  int32_t* field5_to_shuffle = new int32_t[interm_size];
+  int32_t* field1_to_shuffled = new int32_t[interm_size];
+  int32_t* field2_to_shuffled = new int32_t[interm_size];
+  int32_t* field3_to_shuffled = new int32_t[interm_size];
+  int32_t* field4_to_shuffled = new int32_t[interm_size];
+  int32_t* field5_to_shuffled = new int32_t[interm_size];
+  int32_t* perm = gen_random_sequence(interm_size);
+  for(int i=0;i<interm_size;i++) field1_to_shuffle[i] = graph[i].src_v;
+  for(int i=0;i<interm_size;i++) field2_to_shuffle[i] = graph[i].dst_v;
+  for(int i=0;i<interm_size;i++) field3_to_shuffle[i] = graph[i].is_v;
+  for(int i=0;i<interm_size;i++) field4_to_shuffle[i] = graph[i].data;
+  for(int i=0;i<interm_size;i++) field5_to_shuffle[i] = graph[i].o_links;
+  melbourne_shuffle(field1_to_shuffle,perm,field1_to_shuffled,interm_size,1);
+  melbourne_shuffle(field2_to_shuffle,perm,field2_to_shuffled,interm_size,1);
+  melbourne_shuffle(field3_to_shuffle,perm,field3_to_shuffled,interm_size,1);
+  melbourne_shuffle(field4_to_shuffle,perm,field4_to_shuffled,interm_size,1);
+  melbourne_shuffle(field5_to_shuffle,perm,field5_to_shuffled,interm_size,1);
+  graph.clear();
+  for(int i=0;i<interm_size;i++) {
+    graph_ve_p ve = new graph_ve_t;
+    ve->src_v = field1_to_shuffled[i];
+    ve->dst_v = field2_to_shuffled[i];
+    ve->is_v = field3_to_shuffled[i];
+    ve->data = field4_to_shuffled[i];
+    ve->o_links = field5_to_shuffled[i];
+    graph.push_back(*ve);
+  }
+
+}
+
+static void scatter_shuffle_sort(std::vector<graph_ve_t>& graph) {
+  shuffle(graph);  
+  std::sort(graph.begin(),graph.end(),comp_scatter);
+}
+
+static void gather_shuffle_sort(std::vector<graph_ve_t>& graph) {
+  shuffle(graph);  
+  std::sort(graph.begin(),graph.end(),comp_gather);
+}
+
 static void _graphsc(std::vector<graph_ve_t>& graph)
 {
-  std::sort(graph.begin(),graph.end(),comp_scatter);
+  scatter_shuffle_sort(graph);
   _scatter(graph);
-  std::sort(graph.begin(),graph.end(),comp_gather);
-  _gather(graph);
   for(int i=0;i<graph.size();i++){
     graph_ve_t& ve = graph[i];
     printf("ve.is_v=%d,ve.src_v=%d,ve.dst_v=%d,ve.data=%d\n",ve.is_v,ve.src_v,ve.dst_v,ve.data);
   }
+  gather_shuffle_sort(graph);
+  _gather(graph);
 }
 
 void graphsc(std::vector<graph_ve_t>& graph)

@@ -8,7 +8,7 @@
 #include "algo.h"
 #endif
 #include <sys/time.h>
-BOOST_AUTO_TEST_CASE(graphsc_test)
+BOOST_AUTO_TEST_CASE(pagerank_test)
 {
   std::vector<graph_ve_t> graph;
   struct timeval begin,end;
