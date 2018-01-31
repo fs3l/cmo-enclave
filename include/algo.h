@@ -58,7 +58,6 @@ struct graph_ve {
   int32_t src_v;
   int32_t dst_v;
   int32_t is_v;
-  int32_t o_links;
   int32_t data;
 };
 typedef struct graph_ve graph_ve_t;
