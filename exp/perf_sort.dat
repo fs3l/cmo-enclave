@@ -1,0 +1,59 @@
+mel
+Input Size (KB)	Execution time (us)
+0.0625	270
+0.25	418
+1	1115
+4	5978
+16	22865
+64	85444
+256	341776
+1024	1367104
+4096	5468416
+
+oblimsort
+Input Size (KB)	Execution time (us)
+0.0625	192
+0.25	617
+1	2556
+4	11049
+16	47392
+64	236520  
+256	null
+1024	null
+4096	null
+
+cacheshuffle
+Input Size (KB)	Execution time (us)
+0.0625	4670
+0.25	13952
+1	81012
+4	220692
+16	605620
+64	4767359
+256	12020710
+1024	35581526
+4096	247357957
+
+qsort
+Input Size (KB)	Execution time (us)
+0.0625	10
+0.25	12
+1	31
+4	56
+16	null
+64	null
+256	null
+1024	null
+4096	null
+
+SortNet
+Input Size (KB)	Execution time (us)
+0.0625	5
+0.25	14
+1	66
+4	367
+16	1992
+64	10572
+256	52524
+1024	210096
+4096	840834
