@@ -1,0 +1,48 @@
+Melbourne shuffle + quick sort
+Input size (KB)	Execution time (usec)
+0.0625	270
+0.25	418
+1	1115
+4	5978
+16	22865
+64	85444
+256	341776
+1024	1367104
+4096	5468416
+
+Oblivious merge sort
+Input size (KB)	Execution time (usec)
+0.0625	192
+0.25	617
+1	2556
+4	11049
+16	47392
+64	236520  
+256	null
+1024	null
+4096	null
+
+Cache shuffle + quick sort
+Input size (KB)	Execution time (usec)
+0.0625	4670
+0.25	13952
+1	81012
+4	220692
+16	605620
+64	4767359
+256	12020710
+1024	35581526
+4096	247357957
+
+Quick sort (Ideal)
+Input size (KB)	Execution time (usec)
+0.0625	10
+0.25	12
+1	31
+4	56
+16	null
+64	null
+256	null
+1024	null
+4096	null
+

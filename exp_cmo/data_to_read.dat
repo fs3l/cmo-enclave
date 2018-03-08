@@ -1,0 +1,17 @@
+
+series_1
+X(unitX)	Metric 1(unit1)	Metric2(unit2)	Metric3
+1	null	100	900
+2	150	200	850
+3	0	800	300
+4	450	null	450
+5	500	1600	300
+6	550	3200	150
+
+
+series_2
+X(unitX)	Metric 1(unit1)	Metric2(unit2)	Metric3
+1	700	4000	700
+2	650	1500	600
+3	200	200	500
+4	350	50	400
