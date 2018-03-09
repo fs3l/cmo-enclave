@@ -46,3 +46,14 @@ N (in power of 2)	Execution time (usec)
 18	null
 20	null
 
+Bubble Sort
+N (in power of 2)	Execution time (usec)
+4	93
+6	530
+8	1437
+10	31225
+12	236277
+14	1855251
+16	17030761
+18	274286608
+20	5001321121
