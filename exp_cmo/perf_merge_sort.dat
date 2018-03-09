@@ -1,12 +1,12 @@
 CMO
-Data size (KB) 	Execution time (usec)
-64	11214027|0
-128	22451170|0
-256	44959436|0
+N (in power of 2) 	Execution time (usec)
+14	11214027|0
+15	22451170|0
+16	44959436|0
 
 Scan (Baseline)
-Data size (KB)	Execution time (usec)
-64	13053992|0
-128	27666774|0
-256	59718895|0
+N (in power of 2)	Execution time (usec)
+14	13053992|0
+15	27666774|0
+16	59718895|0
 
