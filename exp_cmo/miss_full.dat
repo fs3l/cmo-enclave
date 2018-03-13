@@ -1,0 +1,31 @@
+Baseline (WB + Interrupt)
+In-transaction data size (byte)	Number of aborts
+256	451.4
+512	972.2
+1024	1601.2
+2048	2487.4
+4096	5851.8
+
+CMOS
+In-transaction data size (byte)	Number of aborts
+256	419.4
+512	956
+1024	1262.8
+2048	2281.6
+4096	4229.2
+
+BL2 (Interrupt - lower)
+In-transaction data size (byte)	Number of aborts
+256	346.4
+512	471.2
+1024	969.8
+2048	1954
+4096	4084.2
+
+BL3 (Interrupt - upper)
+In-transaction data size (byte)	Number of aborts
+256	48737
+512	118198
+1024	242072
+2048	491379
+4096	966434
