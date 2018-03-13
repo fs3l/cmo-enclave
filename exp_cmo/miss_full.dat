@@ -6,7 +6,7 @@ In-transaction data size (byte)	Number of aborts
 2048	2487.4
 4096	5851.8
 
-CMOS
+CMO
 In-transaction data size (byte)	Number of aborts
 256	419.4
 512	956
