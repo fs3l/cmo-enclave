@@ -14,7 +14,7 @@ BOOST_AUTO_TEST_CASE(naive_shuffle_test)
    printf("input data size:\n");
    scanf("%d",&size);
 
-   if (size % 128 != 0) {printf("input size is not multiple of 128"); return;}
+   if (size % 32 != 0) {printf("input size is not multiple of 32"); return;}
    #ifdef SGX_APP
     Aes_cbc(size);
    #else
