@@ -45,6 +45,11 @@ add_library(algo ${algo_src})
 target_link_libraries(algo cmo)
 list(APPEND linked_libraries algo)
 
+glob_cpp_source_file(po_algo_src PATH src/po-algo)
+add_library(po_algo ${po_algo_src} src/algo/shuffle_bucket.cpp)
+target_link_libraries(po_algo cmo)
+list(APPEND linked_libraries po_algo)
+
 # add unit test
 enable_testing()
 # load CMakeLists.txt in the test directory.
