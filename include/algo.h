@@ -10,6 +10,9 @@ extern "C" {
 void naive_shuffle(const int32_t* arr_in, const int32_t* perm_in,
                    int32_t* arr_out, int32_t len);
 
+void trace_back(const int32_t* input,int32_t* arr_out, 
+		int32_t len, int32_t col,int32_t m, int32_t n);
+
 void melbourne_shuffle(const int32_t* arr_in, const int32_t* perm_in,
                        int32_t* arr_out, int32_t len, int32_t blow_up_factor);
 
