@@ -4,7 +4,7 @@
 BOOST_AUTO_TEST_CASE(trace_back_test)
 {
   //initilization of input
-  string str1 = "sunday";
+  string str1 = "apple";
   string str2 = "saturday";
   int32_t dist[str1.length()+1][str2.length()+1];
   for(int32_t i=0;i<str1.length()+1;i++){
@@ -42,15 +42,16 @@ BOOST_AUTO_TEST_CASE(trace_back_test)
   for(int k=0;k<(str1.length()+1)*(str2.length()+1);k++){
         output[k] =0;
   }
-  output[(str1.length()+1)*(str2.length()+1)] = dist[str1.length()+1][str2.length()+1];
-
+  output[str1.length()*(str2.length()+1)+str2.length()] = dist[str1.length()][str2.length()];
   //initialization of length
   int32_t len = (str1.length()+1)*(str2.length()+1);
   int32_t col = str2.length()+1;
 
-  trace_back(input, output, len, col,(str1.length()+1),(str2.length()+1));
+  trace_back(input, output, len, col,str1.length(),str2.length());
   for(int k=0;k<(str1.length()+1)*(str2.length()+1);k++){
-  	if(k%9==0) cout<<"\n";
+  	if(k%(str2.length()+1)==0) cout<<"\n";
         cout<<output[k]<<" ";
-    }  	
+    }
+cout<<"\n"<<"\n";
+cout<<"running time is "<< clock();   	
 }

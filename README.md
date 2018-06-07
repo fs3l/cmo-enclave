@@ -1,5 +1,12 @@
 # cmo-enclave
 
+Muzhen's code`
+
+```bash
+make
+./build/bin/test/trace_back
+```
+
 ## Reading Lists
 
 * CMake
