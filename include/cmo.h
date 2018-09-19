@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <vector>
 
-#define PFO 1
+#define PFO 0
 #define L1_WAYS 8
 #define L1_SETS 64
 

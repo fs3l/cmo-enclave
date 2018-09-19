@@ -5,7 +5,7 @@
 #include <cstring>
 #include <stdio.h>
 #define OLD_ALLOC 1
-#define DUMMY 1
+#define DUMMY 0
 #define META_SIZE 128
 #define OB_SIZE 384
 #define L1_SIZE 8192
@@ -470,7 +470,9 @@ void begin_tx(CMO_p rt)
       rt->g_shadow_mem[cal_ob_rw(iob + i,ob->alloc)] = ob->data[ob->shadow_mem_pos + i];
     }
   }
-
+  unsigned long low,high;
+  asm volatile("rdtsc":"=a"(low),"=d"(high));
+  printf("xbegin cycle is %ld\n",low | high<<32 ); 
   __asm__(
       "jmp end_abort_handler_%=\n\t"
       "begin_abort_handler_%=:\n\t"
@@ -517,7 +519,7 @@ void begin_tx(CMO_p rt)
     "add $4, %%rcx\n\t"
     "jmp loop_ip_%=\n\t"
     "endloop_ip_%=:\n\t"
-    : /* no output */
+    : 
     : "r"(rt->g_shadow_mem)
     : "%rdi", "%eax");
 }
@@ -530,6 +532,9 @@ void end_tx_pfo(CMO_p rt) {
 void end_tx(CMO_p rt)
 {
   __asm__("xend\n\t");
+  unsigned long low,high;
+  asm volatile("rdtsc":"=a"(low),"=d"(high));
+  printf("xend cycle is %ld\n",low | high<<32 ); 
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem_pos += ob->iter_pos;
