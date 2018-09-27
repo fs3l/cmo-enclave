@@ -4,6 +4,7 @@
 #include "cmo_queue.h"
 #include "utils.h"
 #define SCAN 0
+extern int g_bktime;
 #if SCAN
 static void _melbourne_shuffle_distribute(const int32_t* arr_in,
                                           const int32_t* perm_in, int32_t len,
@@ -257,6 +258,7 @@ void melbourne_shuffle(const int32_t* arr_in, const int32_t* perm_in,
 //  _melbourne_shuffle(arr_random, perm_random, arr_out, len, blow_up_factor);
   _melbourne_shuffle(arr_in, perm_in, arr_out, len, blow_up_factor);
 
+  printf("bookkeeping time is %d\n",g_bktime);
 //  delete[] random;
 //  delete[] arr_random;
 //  delete[] perm_random;

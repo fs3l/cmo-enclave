@@ -1,6 +1,6 @@
 #include "cmo.h"
 #include "utils.h"
-
+#include <sys/time.h>
 #include <cstdlib>
 #include <cstring>
 #include <stdio.h>
@@ -17,6 +17,10 @@
 #define META_SET 1
 #define OB_RW_SIZE ACTIVE_SET_SIZE * 6
 #define OB_R_SIZE ACTIVE_SET_SIZE * 6
+int end_count = 0;
+int g_bktime = 0;
+unsigned long g_sum = 0;
+unsigned long g_low,g_high;
 uint32_t shadow_mem[2 * 1024 * 1024] __attribute__((aligned(4096)));
 // private functions
 void begin_tx(CMO_p rt);
@@ -63,7 +67,7 @@ void clear_tag(uint32_t* g_mem) {
     memset(set_member,0,16);
   }
 }
-#endif
+#endif //if PFO
 
 #if OLD_ALLOC
 int32_t cal_ob(int32_t offset, ALLOC_p alloc)
@@ -392,8 +396,8 @@ void begin_leaky_sec(CMO_p rt)
   }
   begin_tx(rt);
 }
-#endif
-#endif
+#endif //ifnot PFO
+#endif //ifnot dummy
 
 #if DUMMY
 void end_leaky_sec(CMO_p rt) {}
@@ -422,7 +426,6 @@ int32_t max_read_ob_shadow_mem_size(CMO_p _rt, ReadObIterator_p ob)
 }
 int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 {
-  // TODO
   return ob->len;
 }
 #else
@@ -440,11 +443,36 @@ int32_t max_write_ob_shadow_mem_size(CMO_p _rt, WriteObIterator_p ob)
 void begin_tx_pfo(CMO_p rt)
 {
 
+  //unsigned long low,high;
+  //asm volatile("rdtsc":"=a"(low),"=d"(high));
+  // printf("xbegin cycle is %ld\n",low | high<<32 ); 
+  //g_low = low;
+  //g_high = high;
   __asm__(
-      "jmp end_abort_handler_%=\n\t"
+      // "jmp end_abort_handler_%=\n\t"
       "begin_abort_handler_%=:\n\t"
-      "end_abort_handler_%=:\n\t"
-      "xbegin begin_abort_handler_%=\n\t"
+      "mov %%eax, %%edi\n\t"
+      "push %%rax\n\t"
+      "push %%rcx\n\t"
+      "push %%rdx\n\t"
+      "push %%rsi\n\t"
+      "push %%rdi\n\t"
+      "push %%r8\n\t"
+      "push %%r9\n\t"
+      "push %%r10\n\t"
+      "push %%r11\n\t"
+      "call cmo_tx_abort\n\t"
+      "pop %%r11\n\t"
+      "pop %%r10\n\t"
+      "pop %%r9\n\t"
+      "pop %%r8\n\t"
+      "pop %%rdi\n\t"
+      "pop %%rsi\n\t"
+      "pop %%rdx\n\t"
+      "pop %%rcx\n\t"
+      "pop %%rax\n\t"
+      //"end_abort_handler_%=:\n\t"
+      //"xbegin begin_abort_handler_%=\n\t"
       :::);
 }
 #endif
@@ -472,60 +500,67 @@ void begin_tx(CMO_p rt)
   }
   unsigned long low,high;
   asm volatile("rdtsc":"=a"(low),"=d"(high));
-  printf("xbegin cycle is %ld\n",low | high<<32 ); 
+  //printf("xbegin cycle is %ld\n",low | high<<32 ); 
+  g_low = low;
+  g_high = high;
   __asm__(
-      "jmp end_abort_handler_%=\n\t"
+       "jmp end_abort_handler_%=\n\t"
       "begin_abort_handler_%=:\n\t"
       "mov %%eax, %%edi\n\t"
-      /*"push %%rax\n\t"
-        "push %%rcx\n\t"
-        "push %%rdx\n\t"
-        "push %%rsi\n\t"
-        "push %%rdi\n\t"
-        "push %%r8\n\t"
-        "push %%r9\n\t"
-        "push %%r10\n\t"
-        "push %%r11\n\t"
-        "call cmo_tx_abort\n\t"
-        "pop %%r11\n\t"
-        "pop %%r10\n\t"
-        "pop %%r9\n\t"
-        "pop %%r8\n\t"
-        "pop %%rdi\n\t"
-        "pop %%rsi\n\t"
-        "pop %%rdx\n\t"
-        "pop %%rcx\n\t"
-        "pop %%rax\n\t"*/
-    "end_abort_handler_%=:\n\t"
-    "mov %0, %%rdi\n\t"
-    "mov $0, %%eax\n\t"
-    "mov %%rdi, %%rcx\n\t"
-    "loop_ep_%=:\n\t"
-    "cmpl $0, %%eax\n\t"
-    "jge endloop_ep_%=\n\t"
-    "movl (%%rcx), %%r11d\n\t"
-    "addl $1, %%eax\n\t"
-    "add $4, %%rcx\n\t"
-    "jmp loop_ep_%=\n\t"
-    "endloop_ep_%=:\n\t"
-    "xbegin begin_abort_handler_%=\n\t"
-    "mov $0, %%eax\n\t"
-    "mov %%rdi, %%rcx\n\t"
-    "loop_ip_%=:\n\t"
-    "cmpl $0, %%eax\n\t"
-    "jge endloop_ip_%=\n\t"
-    "movl (%%rcx), %%r11d\n\t"
-    "addl $1, %%eax\n\t"
-    "add $4, %%rcx\n\t"
-    "jmp loop_ip_%=\n\t"
-    "endloop_ip_%=:\n\t"
-    : 
-    : "r"(rt->g_shadow_mem)
-    : "%rdi", "%eax");
+      "push %%rax\n\t"
+      "push %%rcx\n\t"
+      "push %%rdx\n\t"
+      "push %%rsi\n\t"
+      "push %%rdi\n\t"
+      "push %%r8\n\t"
+      "push %%r9\n\t"
+      "push %%r10\n\t"
+      "push %%r11\n\t"
+      "call cmo_tx_abort\n\t"
+      "pop %%r11\n\t"
+      "pop %%r10\n\t"
+      "pop %%r9\n\t"
+      "pop %%r8\n\t"
+      "pop %%rdi\n\t"
+      "pop %%rsi\n\t"
+      "pop %%rdx\n\t"
+      "pop %%rcx\n\t"
+      "pop %%rax\n\t"
+       "end_abort_handler_%=:\n\t"
+      "mov %0, %%rdi\n\t"
+      "mov $0, %%eax\n\t"
+      "mov %%rdi, %%rcx\n\t"
+      "loop_ep_%=:\n\t"
+      "cmpl $0, %%eax\n\t"
+      "jge endloop_ep_%=\n\t"
+      "movl (%%rcx), %%r11d\n\t"
+      "addl $1, %%eax\n\t"
+      "add $4, %%rcx\n\t"
+      "jmp loop_ep_%=\n\t"
+      "endloop_ep_%=:\n\t"
+      "xbegin begin_abort_handler_%=\n\t"
+      "mov $0, %%eax\n\t"
+      "mov %%rdi, %%rcx\n\t"
+      "loop_ip_%=:\n\t"
+      "cmpl $0, %%eax\n\t"
+      "jge endloop_ip_%=\n\t"
+      "movl (%%rcx), %%r11d\n\t"
+      "addl $1, %%eax\n\t"
+      "add $4, %%rcx\n\t"
+      "jmp loop_ip_%=\n\t"
+      "endloop_ip_%=:\n\t"
+      : 
+      : "r"(rt->g_shadow_mem)
+      : "%rdi", "%eax");
 }
 #if PFO
 void end_tx_pfo(CMO_p rt) {
-  __asm__("xend\n\t");
+  //__asm__("xend\n\t");
+  //unsigned long low,high;
+  //asm volatile("rdtsc":"=a"(low),"=d"(high));
+  //g/_sum += (low|high<<32) - (g_low|g_high<<32);
+  //end_count ++;
+  //printf("xend average cycle is %ld\n",g_sum/end_count ); 
   clear_tag(rt->g_shadow_mem);
 }
 #endif
@@ -534,7 +569,9 @@ void end_tx(CMO_p rt)
   __asm__("xend\n\t");
   unsigned long low,high;
   asm volatile("rdtsc":"=a"(low),"=d"(high));
-  printf("xend cycle is %ld\n",low | high<<32 ); 
+  g_sum += (low|high<<32) - (g_low|g_high<<32);
+  end_count ++;
+  printf("xend average cycle is %ld\n",g_sum/end_count ); 
   for (size_t i = 0; i < rt->r_obs.size(); ++i) {
     ReadObIterator_p ob = rt->r_obs[i];
     ob->shadow_mem_pos += ob->iter_pos;
@@ -640,6 +677,8 @@ uint32_t maxset = 0;
 int32_t nob_read_at(const NobArray_p nob, int32_t addr)
 {
 #if PFO
+  struct timeval begin,end;
+  gettimeofday(&begin,NULL);
   uint64_t vm_addr =(uint64_t)nob->g_shadow_mem + cal_nob(nob->shadow_mem + addr,nob->alloc)*sizeof(int32_t);
   uint32_t set_idx = (vm_addr >> 6) & 0x3f;
   uint16_t tag = (vm_addr>>12) & 0xffff;
@@ -648,10 +687,11 @@ int32_t nob_read_at(const NobArray_p nob, int32_t addr)
   //if (set_idx>maxset) maxset = set_idx;
   //printf("nob_read_at g_shadowm_mem=%lx,set_idx=%d, minset=%d, and maxset=%d, and cal_nob=%d and vm_addr=%lx\n",nob->g_shadow_mem,set_idx,minset,maxset,cal_nob(nob->shadow_mem+addr,nob->alloc),vm_addr);
   res = check_tag(set_idx,tag,nob->g_shadow_mem);
+  gettimeofday(&end,NULL);
+  g_bktime += ((end.tv_sec - begin.tv_sec)*1000000 + end.tv_usec - begin.tv_usec);
+  //printf("bookkeeping time is %d\n",g_bktime);
   //if (set_idx==32)
-  //printf("calling check_tag with set=%d, tag=%d, and res=%d\n",set_idx,tag,res);
   if(res > L1_WAYS){
-    //printf("nob partition\n");
     end_tx_pfo(nob->rt);
     begin_tx_pfo(nob->rt);
     check_tag(set_idx,tag,nob->g_shadow_mem);
@@ -667,6 +707,8 @@ int32_t nob_read_at(const NobArray_p nob, int32_t addr)
 void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
 {
 #if PFO
+  struct timeval begin,end;
+  gettimeofday(&begin,NULL);
   uint64_t vm_addr = (uint64_t)nob->g_shadow_mem + cal_nob(nob->shadow_mem + addr,nob->alloc)*sizeof(int32_t);
   uint32_t set_idx = (vm_addr >> 6) & 0x3f;
   uint16_t tag = (vm_addr>>12) & 0xffff;
@@ -675,10 +717,11 @@ void nob_write_at(NobArray_p nob, int32_t addr, int32_t data)
   // if (set_idx>maxset) maxset = set_idx;
   //printf("nob_write_at set_idx=%d, minset=%d, and maxset=%d, and cal_nob=%d and vm_addr=%lx\n",set_idx,minset,maxset,cal_nob(nob->shadow_mem+addr,nob->alloc),vm_addr);
   res = check_tag(set_idx,tag,nob->g_shadow_mem);
+  gettimeofday(&end,NULL);
+  g_bktime += ((end.tv_sec - begin.tv_sec)*1000000 + end.tv_usec - begin.tv_usec);
   //if (set_idx==32)
   //printf("calling check_tag with set=%d, tag=%d, and res=%d\n",set_idx,tag,res);
   if(res > L1_WAYS){
-    //   printf("nob partition\n");
     end_tx_pfo(nob->rt);
     begin_tx_pfo(nob->rt);
     check_tag(set_idx,tag,nob->g_shadow_mem);
@@ -695,5 +738,12 @@ int32_t nob_read_at(const ReadNobArray_p nob, int32_t addr)
 {
   return nob->g_shadow_mem[cal_read_nob(nob->shadow_mem + addr,nob->alloc)];
 }
-#endif
-void cmo_tx_abort(int code) { print_message("abort! (code %d)\n", code); }
+#endif //if not dummy
+void cmo_tx_abort(int code) { 
+  unsigned long low,high;
+  asm volatile("rdtsc":"=a"(low),"=d"(high));
+  //printf("xabrt cycle is %ld\n",low | high<<32 ); 
+  g_low = low;
+  g_high = high;
+  print_message("abort! (code %d)\n", code); 
+}
